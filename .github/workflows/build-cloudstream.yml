@@ -1,0 +1,86 @@
+name: Build Cloudstream Mediatheken
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ZDF/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'repo.json'
+      - '.github/workflows/build-cloudstream.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          path: src
+
+      - name: Checkout builds branch
+        uses: actions/checkout@v4
+        with:
+          ref: builds
+          path: builds
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build ZDF plugin
+        run: |
+          cd "$GITHUB_WORKSPACE/src"
+          gradle make makePluginsJson
+
+      - name: Prepare plugin repository
+        run: |
+          rm -f "$GITHUB_WORKSPACE/builds"/*.cs3 "$GITHUB_WORKSPACE/builds/plugins.json"
+          find "$GITHUB_WORKSPACE/src" -path '*/build/*.cs3' -exec cp {} "$GITHUB_WORKSPACE/builds/" \;
+          cp "$GITHUB_WORKSPACE/src/build/plugins.json" "$GITHUB_WORKSPACE/builds/plugins.json"
+          curl -fsSL https://raw.githubusercontent.com/Bnyro/GermanProviders/builds/plugins.json -o /tmp/germanproviders.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          workspace = Path(os.environ['GITHUB_WORKSPACE'])
+          output = workspace / 'builds' / 'plugins.json'
+          upstream = Path('/tmp/germanproviders.json')
+
+          plugins = json.loads(output.read_text(encoding='utf-8'))
+          german = json.loads(upstream.read_text(encoding='utf-8'))
+          ard = next(item for item in german if item.get('internalName') == 'ARD')
+          plugins = [ard] + [item for item in plugins if item.get('internalName') != 'ARD']
+          output.write_text(json.dumps(plugins, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Publish builds
+        run: |
+          cd "$GITHUB_WORKSPACE/builds"
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add .
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Update ARD and ZDF Cloudstream plugins"
+          git push
