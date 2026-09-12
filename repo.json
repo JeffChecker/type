@@ -1,6 +1,6 @@
 {
-  "name": "ARD und ZDF Mediatheken",
-  "description": "Cloudstream Erweiterungen für ARD und ZDF Mediathek",
+  "name": "Deutsche Mediatheken und Free TV",
+  "description": "Cloudstream Erweiterungen für ARD, ZDF, ZDFneo, ZDFinfo, 3sat, KiKA, phoenix, ARTE und Pluto TV",
   "manifestVersion": 1,
   "pluginLists": [
     "https://raw.githubusercontent.com/JeffChecker/type/builds/plugins.json"
