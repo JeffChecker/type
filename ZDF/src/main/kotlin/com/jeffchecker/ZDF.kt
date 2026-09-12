@@ -8,9 +8,14 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.newExtractorLink
 import java.net.URLEncoder
 
-class ZDF : MainAPI() {
-    override var name = "ZDF Mediathek"
-    override var mainUrl = "https://www.zdf.de"
+open class MediathekViewChannelProvider(
+    private val channel: String,
+    displayName: String,
+    siteUrl: String,
+    private val homeTitle: String
+) : MainAPI() {
+    override var name = displayName
+    override var mainUrl = siteUrl
     override var lang = "de"
     override val hasMainPage = true
     override val hasQuickSearch = true
@@ -19,11 +24,11 @@ class ZDF : MainAPI() {
     private val apiUrl = "https://mediathekviewweb.de/api/query"
     private val pageSize = 30
 
-    private suspend fun queryZdf(search: String? = null, page: Int = 1): List<MvwEntry> {
+    private suspend fun queryChannel(search: String? = null, page: Int = 1): List<MvwEntry> {
         val queries = mutableListOf<Map<String, Any>>(
             mapOf(
                 "fields" to listOf("channel"),
-                "query" to "ZDF"
+                "query" to channel
             )
         )
 
@@ -63,10 +68,10 @@ class ZDF : MainAPI() {
     }
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val entries = queryZdf(page = page)
+        val entries = queryChannel(page = page)
         return newHomePageResponse(
             HomePageList(
-                name = "Neu in der ZDF Mediathek",
+                name = homeTitle,
                 list = entries.map { it.toSearchResponse() },
                 isHorizontalImages = false
             ),
@@ -77,7 +82,7 @@ class ZDF : MainAPI() {
     override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
 
     override suspend fun search(query: String): List<SearchResponse> {
-        return queryZdf(search = query).map { it.toSearchResponse() }
+        return queryChannel(search = query).map { it.toSearchResponse() }
     }
 
     override suspend fun load(url: String): LoadResponse {
@@ -106,18 +111,19 @@ class ZDF : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val entry = parseJson<MvwEntry>(data)
+        val sourceName = entry.channel.ifBlank { channel }
         val streams = listOf(
-            "ZDF HD" to entry.urlVideoHd,
-            "ZDF SD" to entry.urlVideo,
-            "ZDF LQ" to entry.urlVideoLow
+            "$sourceName HD" to entry.urlVideoHd,
+            "$sourceName SD" to entry.urlVideo,
+            "$sourceName LQ" to entry.urlVideoLow
         ).filter { it.second.isNotBlank() }.distinctBy { it.second }
 
-        streams.forEach { (label, url) ->
+        streams.forEach { (label, streamUrl) ->
             callback.invoke(
                 newExtractorLink(
-                    source = "ZDF",
+                    source = sourceName,
                     name = label,
-                    url = url
+                    url = streamUrl
                 )
             )
         }
@@ -164,3 +170,45 @@ class ZDF : MainAPI() {
         val urlVideoHd: String = ""
     )
 }
+
+class ZDF : MediathekViewChannelProvider(
+    channel = "ZDF",
+    displayName = "ZDF Mediathek",
+    siteUrl = "https://www.zdf.de",
+    homeTitle = "Neu in der ZDF Mediathek"
+)
+
+class ZDFneo : MediathekViewChannelProvider(
+    channel = "ZDFneo",
+    displayName = "ZDFneo",
+    siteUrl = "https://www.zdf.de",
+    homeTitle = "Neu bei ZDFneo"
+)
+
+class ZDFinfo : MediathekViewChannelProvider(
+    channel = "ZDFinfo",
+    displayName = "ZDFinfo",
+    siteUrl = "https://www.zdf.de",
+    homeTitle = "Neu bei ZDFinfo"
+)
+
+class DreiSat : MediathekViewChannelProvider(
+    channel = "3sat",
+    displayName = "3sat Mediathek",
+    siteUrl = "https://www.3sat.de",
+    homeTitle = "Neu in der 3sat Mediathek"
+)
+
+class KiKA : MediathekViewChannelProvider(
+    channel = "KIKA",
+    displayName = "KiKA Mediathek",
+    siteUrl = "https://www.kika.de",
+    homeTitle = "Neu in der KiKA Mediathek"
+)
+
+class Phoenix : MediathekViewChannelProvider(
+    channel = "PHOENIX",
+    displayName = "phoenix Mediathek",
+    siteUrl = "https://www.phoenix.de",
+    homeTitle = "Neu in der phoenix Mediathek"
+)
