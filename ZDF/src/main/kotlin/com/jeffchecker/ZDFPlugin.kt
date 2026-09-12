@@ -8,5 +8,10 @@ import com.lagradost.cloudstream3.plugins.Plugin
 class ZDFPlugin : Plugin() {
     override fun load(context: Context) {
         registerMainAPI(ZDF())
+        registerMainAPI(ZDFneo())
+        registerMainAPI(ZDFinfo())
+        registerMainAPI(DreiSat())
+        registerMainAPI(KiKA())
+        registerMainAPI(Phoenix())
     }
 }
