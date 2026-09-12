@@ -58,7 +58,7 @@ jobs:
           cd "$GITHUB_WORKSPACE/cloudstream-gradle"
           gradle publishToMavenLocal
 
-      - name: Build ZDF plugin
+      - name: Build public broadcaster plugin
         run: |
           cd "$GITHUB_WORKSPACE/src"
           gradle make makePluginsJson
@@ -80,8 +80,10 @@ jobs:
 
           plugins = json.loads(output.read_text(encoding='utf-8'))
           german = json.loads(upstream.read_text(encoding='utf-8'))
-          ard = next(item for item in german if item.get('internalName') == 'ARD')
-          plugins = [ard] + [item for item in plugins if item.get('internalName') != 'ARD']
+          wanted = ["ARD", "Arte", "PlutoTV"]
+          upstream_plugins = [next(item for item in german if item.get('internalName') == name) for name in wanted]
+          own_names = {item.get('internalName') for item in upstream_plugins}
+          plugins = upstream_plugins + [item for item in plugins if item.get('internalName') not in own_names]
           output.write_text(json.dumps(plugins, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
 
@@ -94,5 +96,5 @@ jobs:
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "Update ARD and ZDF Cloudstream plugins"
+          git commit -m "Update legal German Cloudstream plugins"
           git push
