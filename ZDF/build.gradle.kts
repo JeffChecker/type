@@ -1,8 +1,8 @@
-version = 1
+version = 2
 
 cloudstream {
     language = "de"
-    description = "ZDF Mediathek über MediathekView"
+    description = "ZDF, ZDFneo, ZDFinfo, 3sat, KiKA und phoenix über MediathekView"
     authors = listOf("JeffChecker")
     status = 1
     tvTypes = listOf(
