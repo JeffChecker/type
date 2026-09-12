@@ -23,10 +23,10 @@
   },
   {
     "iconUrl": "https://www.google.com/s2/favicons?domain=https://www.zdf.de&sz=%size%",
-    "fileHash": "sha256-371ea5734d0b6ef911c35d58861f825251d0808ece709a691648ebb1367bb5d8",
+    "fileHash": "sha256-da0708a9d8901d0ae36fa411c6d07db4e46482c09303f0f647197ef91583f0b0",
     "apiVersion": 1,
     "repositoryUrl": "https://github.com/JeffChecker/type",
-    "fileSize": 17169,
+    "fileSize": 18424,
     "status": 1,
     "language": "de",
     "authors": [
