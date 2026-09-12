@@ -3,6 +3,10 @@ name: Build Cloudstream Mediatheken
 permissions:
   contents: write
 
+concurrency:
+  group: cloudstream-build
+  cancel-in-progress: true
+
 on:
   push:
     branches:
@@ -82,8 +86,8 @@ jobs:
           german = json.loads(upstream.read_text(encoding='utf-8'))
           wanted = ["ARD", "Arte", "PlutoTV"]
           upstream_plugins = [next(item for item in german if item.get('internalName') == name) for name in wanted]
-          own_names = {item.get('internalName') for item in upstream_plugins}
-          plugins = upstream_plugins + [item for item in plugins if item.get('internalName') not in own_names]
+          upstream_names = {item.get('internalName') for item in upstream_plugins}
+          plugins = upstream_plugins + [item for item in plugins if item.get('internalName') not in upstream_names]
           output.write_text(json.dumps(plugins, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
 
