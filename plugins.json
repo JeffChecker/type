@@ -22,11 +22,54 @@
     "name": "ARD"
   },
   {
+    "iconUrl": "https://static-cdn.arte.tv/replay/favicons/favicon-%size%x%size%.png",
+    "fileHash": "sha256-2339d8b587559feff8ef427f770e2fac722e6c00fb8405a4436b3f417aec0b2e",
+    "apiVersion": 1,
+    "repositoryUrl": "https://github.com/Bnyro/GermanProviders",
+    "fileSize": 36162,
+    "status": 1,
+    "language": "de",
+    "authors": [
+      "Bnyro"
+    ],
+    "tvTypes": [
+      "Movie",
+      "TvSeries"
+    ],
+    "version": 2,
+    "internalName": "Arte",
+    "description": "Viel mehr als TV",
+    "url": "https://raw.githubusercontent.com/Bnyro/GermanProviders/builds/Arte.cs3",
+    "name": "Arte"
+  },
+  {
+    "iconUrl": "https://www.google.com/s2/favicons?domain=https://pluto.tv&sz=%size%",
+    "fileHash": "sha256-8cecab6732288898daf9f21d6b76ab8997f691d1e65d4ccaa692c45ad0dd0095",
+    "apiVersion": 1,
+    "repositoryUrl": "https://github.com/Bnyro/GermanProviders",
+    "fileSize": 43591,
+    "status": 1,
+    "language": "de",
+    "authors": [
+      "Bnyro"
+    ],
+    "tvTypes": [
+      "Movie",
+      "TvSeries",
+      "Live"
+    ],
+    "version": 1,
+    "internalName": "PlutoTV",
+    "description": "Streamingportal von Paramount",
+    "url": "https://raw.githubusercontent.com/Bnyro/GermanProviders/builds/PlutoTV.cs3",
+    "name": "PlutoTV"
+  },
+  {
     "iconUrl": "https://www.google.com/s2/favicons?domain=https://www.zdf.de&sz=%size%",
-    "fileHash": "sha256-da0708a9d8901d0ae36fa411c6d07db4e46482c09303f0f647197ef91583f0b0",
+    "fileHash": "sha256-3ae28d541556788187420faa873e3742dafc9fc61a17a3d95d41ee41372b4270",
     "apiVersion": 1,
     "repositoryUrl": "https://github.com/JeffChecker/type",
-    "fileSize": 18424,
+    "fileSize": 18450,
     "status": 1,
     "language": "de",
     "authors": [
@@ -36,9 +79,9 @@
       "Movie",
       "TvSeries"
     ],
-    "version": 1,
+    "version": 2,
     "internalName": "ZDF",
-    "description": "ZDF Mediathek über MediathekView",
+    "description": "ZDF, ZDFneo, ZDFinfo, 3sat, KiKA und phoenix über MediathekView",
     "url": "https://raw.githubusercontent.com/JeffChecker/type/builds/ZDF.cs3",
     "name": "ZDF"
   }
