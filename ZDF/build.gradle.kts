@@ -11,3 +11,5 @@ cloudstream {
     )
     iconUrl = "https://www.google.com/s2/favicons?domain=https://www.zdf.de&sz=%size%"
 }
+
+// Änderungen an diesem Modul starten automatisch den Cloudstream Build.
