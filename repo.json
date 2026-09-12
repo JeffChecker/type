@@ -1,0 +1,8 @@
+{
+  "name": "ARD und ZDF Mediatheken",
+  "description": "Cloudstream Erweiterungen für ARD und ZDF Mediathek",
+  "manifestVersion": 1,
+  "pluginLists": [
+    "https://raw.githubusercontent.com/JeffChecker/type/builds/plugins.json"
+  ]
+}
