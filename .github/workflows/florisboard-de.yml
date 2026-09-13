@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  inspect:
+  build-de:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout controller repository
@@ -32,19 +32,8 @@ jobs:
           submodules: recursive
           path: florisboard
 
-      - name: Compare German translation with original
-        run: python3 controller/florisboard-de/check_translations.py
-
-  baseline-build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout exact FlorisBoard v0.5.2
-        uses: actions/checkout@v4
-        with:
-          repository: florisboard/florisboard
-          ref: v0.5.2
-          submodules: recursive
-          path: florisboard
+      - name: Apply complete German localization
+        run: python3 controller/florisboard-de/make_german.py
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -55,12 +44,27 @@ jobs:
       - name: Set up CMake and Ninja
         uses: lukka/get-cmake@v4.0.2
 
-      - name: Build unchanged v0.5.2 baseline
+      - name: Build German APK
         working-directory: florisboard
         run: ./gradlew clean assembleDebug
 
-      - name: Upload baseline APK
+      - name: Prepare APK
+        run: cp florisboard/app/build/outputs/apk/debug/app-debug.apk FlorisBoard-DE-v0.5.2.apk
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: florisboard-v0.5.2-baseline-debug
-          path: florisboard/app/build/outputs/apk/debug/app-debug.apk
+          name: FlorisBoard-DE-v0.5.2
+          path: FlorisBoard-DE-v0.5.2.apk
+
+      - name: Publish APK as GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="florisboard-de-v0.5.2"
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "FlorisBoard DE v0.5.2" \
+              --notes "Deutsche Sonderversion auf Basis des unveränderten FlorisBoard Tags v0.5.2 (Upstream Commit 2e82060251897226c0739b9f52d1d051b02305fb). Die vorhandene deutsche Übersetzung wurde um alle 119 in v0.5.2 fehlenden UI Texte ergänzt. Tastaturfunktionen, Layouts und Sprachdaten bleiben erhalten. Eigenes Paket: dev.patrickgold.florisboard.de. FlorisBoard steht unter der Apache License 2.0."
+          fi
+          gh release upload "$TAG" FlorisBoard-DE-v0.5.2.apk --repo "$GITHUB_REPOSITORY" --clobber
