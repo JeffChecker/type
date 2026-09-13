@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  inspect-and-build:
+  inspect:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout controller repository
@@ -34,6 +34,17 @@ jobs:
 
       - name: Compare German translation with original
         run: python3 controller/florisboard-de/check_translations.py
+
+  baseline-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact FlorisBoard v0.5.2
+        uses: actions/checkout@v4
+        with:
+          repository: florisboard/florisboard
+          ref: v0.5.2
+          submodules: recursive
+          path: florisboard
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
