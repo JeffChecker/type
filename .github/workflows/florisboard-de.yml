@@ -1,0 +1,55 @@
+name: FlorisBoard DE v0.5.2
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'florisboard-de/**'
+      - '.github/workflows/florisboard-de.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: florisboard-de-v052
+  cancel-in-progress: true
+
+jobs:
+  inspect-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout controller repository
+        uses: actions/checkout@v4
+        with:
+          path: controller
+
+      - name: Checkout exact FlorisBoard v0.5.2
+        uses: actions/checkout@v4
+        with:
+          repository: florisboard/florisboard
+          ref: v0.5.2
+          submodules: recursive
+          path: florisboard
+
+      - name: Compare German translation with original
+        run: python3 controller/florisboard-de/check_translations.py
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      - name: Set up CMake and Ninja
+        uses: lukka/get-cmake@v4.0.2
+
+      - name: Build unchanged v0.5.2 baseline
+        working-directory: florisboard
+        run: ./gradlew clean assembleDebug
+
+      - name: Upload baseline APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: florisboard-v0.5.2-baseline-debug
+          path: florisboard/app/build/outputs/apk/debug/app-debug.apk
