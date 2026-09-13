@@ -32,8 +32,20 @@ jobs:
           submodules: recursive
           path: florisboard
 
+      - name: Checkout exact JetPref snapshot source
+        uses: actions/checkout@v4
+        with:
+          repository: patrickgold/jetpref
+          ref: d6e12dda6517345dacc3682aa476a8448a71c34b
+          path: jetpref
+
       - name: Apply complete German localization
         run: python3 controller/florisboard-de/make_german.py
+
+      - name: Enable locally rebuilt JetPref snapshot
+        run: |
+          sed -i 's@        // mavenLocal()@        mavenLocal()@' florisboard/settings.gradle.kts
+          sed -i 's/projectVersion=0.3.0-beta02/projectVersion=20251119T222500Z-SNAPSHOT/' jetpref/gradle.properties
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -43,6 +55,15 @@ jobs:
 
       - name: Set up CMake and Ninja
         uses: lukka/get-cmake@v4.0.2
+
+      - name: Rebuild exact JetPref snapshot to Maven Local
+        working-directory: jetpref
+        run: |
+          ./gradlew \
+            :datastore-model:publishToMavenLocal \
+            :datastore-model-processor:publishToMavenLocal \
+            :datastore-ui:publishToMavenLocal \
+            :material-ui:publishToMavenLocal
 
       - name: Build German APK
         working-directory: florisboard
@@ -65,6 +86,6 @@ jobs:
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
               --title "FlorisBoard DE v0.5.2" \
-              --notes "Deutsche Sonderversion auf Basis des unveränderten FlorisBoard Tags v0.5.2 (Upstream Commit 2e82060251897226c0739b9f52d1d051b02305fb). Die vorhandene deutsche Übersetzung wurde um alle 119 in v0.5.2 fehlenden UI Texte ergänzt. Tastaturfunktionen, Layouts und Sprachdaten bleiben erhalten. Eigenes Paket: dev.patrickgold.florisboard.de. FlorisBoard steht unter der Apache License 2.0."
+              --notes "Deutsche Sonderversion auf Basis des FlorisBoard Tags v0.5.2 (Upstream Commit 2e82060251897226c0739b9f52d1d051b02305fb). Die vorhandene deutsche Übersetzung wurde um alle 119 in v0.5.2 fehlenden UI Texte ergänzt. Der inzwischen entfernte JetPref Snapshot 20251119T222500Z-SNAPSHOT wird reproduzierbar aus seinem ursprünglichen Quellcommit d6e12dda6517345dacc3682aa476a8448a71c34b lokal neu gebaut. Tastaturfunktionen, Layouts und Sprachdaten bleiben erhalten. Eigenes Paket: dev.patrickgold.florisboard.de. FlorisBoard und JetPref stehen unter der Apache License 2.0."
           fi
           gh release upload "$TAG" FlorisBoard-DE-v0.5.2.apk --repo "$GITHUB_REPOSITORY" --clobber
