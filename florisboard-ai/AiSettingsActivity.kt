@@ -78,7 +78,7 @@ class AiSettingsActivity : ComponentActivity() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.fillMaxWidth(0.80f)) {
                     Text("Automatische KI Korrektur", style = MaterialTheme.typography.titleMedium)
                     Text("Passwortfelder, E-Mail/URL-Felder und Inkognito werden nicht an die KI gesendet.")
                 }
