@@ -17,9 +17,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
@@ -28,10 +25,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
 /**
- * Lightweight AI assistant for FlorisBoard.
- *
- * Automatic proofreading is intentionally debounced. Text is only sent after a short typing pause,
- * not on every single key press. Password-like fields and incognito mode are blocked by the caller.
+ * KI Schreibassistent für FlorisBoard.
+ * Automatische Korrekturen laufen erst nach einer kurzen Schreibpause und nicht nach jedem Tastendruck.
  */
 class AiAssistant(private val context: Context) {
     companion object {
@@ -116,8 +111,8 @@ class AiAssistant(private val context: Context) {
                 }
 
                 val root = Json.parseToJsonElement(responseText).jsonObject
-                val choices = root["choices"]?.jsonArray ?: JsonArray(emptyList())
-                val answer = choices.firstOrNull()?.jsonObject
+                val choices = root["choices"]?.jsonArray
+                val answer = choices?.firstOrNull()?.jsonObject
                     ?.get("message")?.jsonObject
                     ?.get("content")?.jsonPrimitive?.content
                     ?.let(::cleanModelOutput)
@@ -166,6 +161,11 @@ class AiAssistant(private val context: Context) {
     }
 
     fun toggleAutoCorrection() {
+        if (prefs.getString(KEY_API_KEY, "").isNullOrBlank()) {
+            toast("Für die KI Autokorrektur zuerst den kostenlosen Groq API Schlüssel eintragen")
+            openSettings()
+            return
+        }
         val enabled = !prefs.getBoolean(KEY_AUTO_CORRECTION, true)
         prefs.edit().putBoolean(KEY_AUTO_CORRECTION, enabled).apply()
         toast(if (enabled) "KI Autokorrektur aktiviert" else "KI Autokorrektur deaktiviert")
@@ -208,7 +208,6 @@ class AiAssistant(private val context: Context) {
                 return@launch
             }
             if (corrected == target.text || corrected.isBlank()) return@launch
-            // Proofreading must not suddenly turn one sentence into an essay.
             if (corrected.length > target.text.length * 2 + 80) return@launch
             applyIfStillCurrent(target, corrected)
         }
