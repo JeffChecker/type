@@ -59,6 +59,17 @@ class AiSettingsActivity : ComponentActivity() {
         }
         var autoCorrection by remember { mutableStateOf(prefs.getBoolean(AiAssistant.KEY_AUTO_CORRECTION, true)) }
         var status by remember { mutableStateOf("") }
+        var savedProviderId by remember { mutableStateOf(providerId) }
+        var savedModelId by remember {
+            mutableStateOf(
+                when (AiProvider.fromId(providerId)) {
+                    AiProvider.OPENAI -> openAiModel
+                    AiProvider.GEMINI -> geminiModel
+                    AiProvider.CLAUDE -> claudeModel
+                    AiProvider.GROQ -> groqModel
+                }
+            )
+        }
         var models by remember { mutableStateOf<List<AiModel>>(emptyList()) }
         val scope = rememberCoroutineScope()
         val provider = AiProvider.fromId(providerId)
@@ -96,8 +107,8 @@ class AiSettingsActivity : ComponentActivity() {
             }
         }
 
-        fun save() {
-            prefs.edit()
+        fun save(): Boolean {
+            val ok = prefs.edit()
                 .putString(AiBackend.KEY_PROVIDER, providerId)
                 .putString(AiBackend.KEY_OPENAI_API_KEY, openAiKey.trim())
                 .putString(AiBackend.KEY_GEMINI_API_KEY, geminiKey.trim())
@@ -108,15 +119,33 @@ class AiSettingsActivity : ComponentActivity() {
                 .putString(AiBackend.KEY_CLAUDE_MODEL, claudeModel.trim().ifBlank { AiBackend.AUTO_MODEL })
                 .putString(AiBackend.KEY_GROQ_MODEL, groqModel.trim().ifBlank { AiBackend.AUTO_MODEL })
                 .putBoolean(AiAssistant.KEY_AUTO_CORRECTION, autoCorrection)
-                .apply()
+                .commit()
+            if (ok) {
+                savedProviderId = providerId
+                savedModelId = currentModel().trim().ifBlank { AiBackend.AUTO_MODEL }
+            }
+            return ok
         }
 
         fun chooseProvider(newProvider: AiProvider) {
             providerId = newProvider.id
             models = emptyList()
-            status = "${newProvider.displayName} ausgewählt"
-            prefs.edit().putString(AiBackend.KEY_PROVIDER, newProvider.id).apply()
+            val ok = prefs.edit().putString(AiBackend.KEY_PROVIDER, newProvider.id).commit()
+            if (ok) {
+                savedProviderId = newProvider.id
+                savedModelId = when (newProvider) {
+                    AiProvider.OPENAI -> openAiModel
+                    AiProvider.GEMINI -> geminiModel
+                    AiProvider.CLAUDE -> claudeModel
+                    AiProvider.GROQ -> groqModel
+                }
+                status = "${newProvider.displayName} ist jetzt aktiv"
+            } else {
+                status = "Anbieter konnte nicht gespeichert werden"
+            }
         }
+
+        val currentSelectionIsSaved = savedProviderId == providerId && savedModelId == currentModel()
 
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
@@ -148,7 +177,11 @@ class AiSettingsActivity : ComponentActivity() {
                     checked = autoCorrection,
                     onCheckedChange = {
                         autoCorrection = it
-                        save()
+                        status = if (save()) {
+                            if (it) "Automatische KI Korrektur ist aktiv" else "Automatische KI Korrektur ist aus"
+                        } else {
+                            "Einstellung konnte nicht gespeichert werden"
+                        }
                     },
                 )
             }
@@ -176,14 +209,40 @@ class AiSettingsActivity : ComponentActivity() {
                 supportingText = { Text("'auto' = Modell wird aus der aktuellen API Modellliste automatisch gewählt") },
                 singleLine = true,
             )
+
+            Text(
+                if (currentSelectionIsSaved) {
+                    "✓ Aktiv gespeichert: ${provider.displayName} • ${currentModel()}"
+                } else {
+                    "Noch nicht gespeichert: ${provider.displayName} • ${currentModel()}"
+                },
+                style = MaterialTheme.typography.bodyLarge,
+            )
+
+            Button(onClick = {
+                status = if (save()) {
+                    "Gespeichert. ${provider.displayName} mit ${currentModel()} wird verwendet."
+                } else {
+                    "Speichern fehlgeschlagen"
+                }
+            }, modifier = Modifier.fillMaxWidth()) { Text("Speichern und verwenden") }
+
+            if (status.isNotBlank()) Text(status, style = MaterialTheme.typography.bodyLarge)
+
             Button(onClick = {
                 setCurrentModel(AiBackend.AUTO_MODEL)
-                save()
-                status = "Automatische Modellwahl aktiviert"
+                status = if (save()) {
+                    "Automatische Modellwahl ist gespeichert und aktiv"
+                } else {
+                    "Speichern fehlgeschlagen"
+                }
             }, modifier = Modifier.fillMaxWidth()) { Text("Automatisch wählen") }
 
             Button(onClick = {
-                save()
+                if (!save()) {
+                    status = "Speichern fehlgeschlagen"
+                    return@Button
+                }
                 status = "Modelle werden über ${provider.displayName} geladen …"
                 scope.launch {
                     status = try {
@@ -202,22 +261,31 @@ class AiSettingsActivity : ComponentActivity() {
                 models.take(20).forEach { model ->
                     Button(onClick = {
                         setCurrentModel(model.id)
-                        save()
-                        status = "Modell ${model.displayName} ausgewählt"
+                        status = if (save()) {
+                            "Gespeichert und aktiv: ${provider.displayName} • ${model.displayName}"
+                        } else {
+                            "Modell konnte nicht gespeichert werden"
+                        }
                     }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (currentModel() == model.id) "${model.displayName} ✓" else model.displayName)
+                    }
+                    if (currentModel() == model.id && savedProviderId == providerId && savedModelId == model.id) {
+                        Text("✓ Dieses Modell ist gespeichert und wird verwendet.")
                     }
                 }
                 if (models.size > 20) Text("Weitere Modelle können über ihre Modell-ID eingetragen werden.")
             }
 
             Button(onClick = {
-                save()
+                if (!save()) {
+                    status = "Speichern fehlgeschlagen"
+                    return@Button
+                }
                 status = "Verbindung wird geprüft …"
                 scope.launch {
                     status = try {
                         val result = AiAssistant.testConnection(provider, currentKey().trim(), currentModel().trim())
-                        "Verbindung erfolgreich. Test: $result"
+                        "✓ Verbindung erfolgreich. ${provider.displayName} mit ${currentModel()} funktioniert. Test: $result"
                     } catch (e: Throwable) {
                         e.message ?: "Verbindung fehlgeschlagen"
                     }
@@ -225,11 +293,12 @@ class AiSettingsActivity : ComponentActivity() {
             }, modifier = Modifier.fillMaxWidth()) { Text("KI Verbindung testen") }
 
             Button(onClick = {
-                save()
-                status = "Einstellungen gespeichert"
-            }, modifier = Modifier.fillMaxWidth()) { Text("Speichern") }
-
-            if (status.isNotBlank()) Text(status, style = MaterialTheme.typography.bodyLarge)
+                if (save()) {
+                    finish()
+                } else {
+                    status = "Speichern fehlgeschlagen"
+                }
+            }, modifier = Modifier.fillMaxWidth()) { Text("Speichern und schließen") }
 
             Spacer(Modifier.height(8.dp))
             Text("Stil Funktionen", style = MaterialTheme.typography.titleLarge)
