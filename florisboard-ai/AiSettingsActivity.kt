@@ -37,40 +37,69 @@ class AiSettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
-                AiSettingsScreen()
-            }
+            MaterialTheme { AiSettingsScreen() }
         }
     }
 
     @Composable
     private fun AiSettingsScreen() {
         val prefs = remember { getSharedPreferences(AiAssistant.PREFS_NAME, Context.MODE_PRIVATE) }
-        var apiKey by remember { mutableStateOf(prefs.getString(AiAssistant.KEY_API_KEY, "").orEmpty()) }
-        var model by remember { mutableStateOf(prefs.getString(AiAssistant.KEY_MODEL, AiAssistant.DEFAULT_MODEL).orEmpty()) }
+        var providerId by remember {
+            mutableStateOf(prefs.getString(AiAssistant.KEY_PROVIDER, AiAssistant.DEFAULT_PROVIDER.id) ?: AiAssistant.DEFAULT_PROVIDER.id)
+        }
+        var openAiKey by remember { mutableStateOf(prefs.getString(AiAssistant.KEY_OPENAI_API_KEY, "").orEmpty()) }
+        var groqKey by remember { mutableStateOf(prefs.getString(AiAssistant.KEY_GROQ_API_KEY, "").orEmpty()) }
+        var openAiModel by remember { mutableStateOf(prefs.getString(AiAssistant.KEY_OPENAI_MODEL, AiAssistant.DEFAULT_OPENAI_MODEL).orEmpty()) }
+        var groqModel by remember {
+            mutableStateOf(
+                prefs.getString(AiAssistant.KEY_GROQ_MODEL, "").orEmpty().ifBlank {
+                    prefs.getString(AiAssistant.LEGACY_KEY_MODEL, AiAssistant.DEFAULT_GROQ_MODEL).orEmpty()
+                }
+            )
+        }
         var autoCorrection by remember { mutableStateOf(prefs.getBoolean(AiAssistant.KEY_AUTO_CORRECTION, true)) }
         var status by remember { mutableStateOf("") }
         val scope = rememberCoroutineScope()
+        val provider = AiProvider.fromId(providerId)
 
         fun save() {
             prefs.edit()
-                .putString(AiAssistant.KEY_API_KEY, apiKey.trim())
-                .putString(AiAssistant.KEY_MODEL, model.trim().ifBlank { AiAssistant.DEFAULT_MODEL })
+                .putString(AiAssistant.KEY_PROVIDER, providerId)
+                .putString(AiAssistant.KEY_OPENAI_API_KEY, openAiKey.trim())
+                .putString(AiAssistant.KEY_GROQ_API_KEY, groqKey.trim())
+                .putString(AiAssistant.KEY_OPENAI_MODEL, openAiModel.trim().ifBlank { AiAssistant.DEFAULT_OPENAI_MODEL })
+                .putString(AiAssistant.KEY_GROQ_MODEL, groqModel.trim().ifBlank { AiAssistant.DEFAULT_GROQ_MODEL })
                 .putBoolean(AiAssistant.KEY_AUTO_CORRECTION, autoCorrection)
                 .apply()
         }
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text("KI Schreibassistent", style = MaterialTheme.typography.headlineSmall)
+            Text("Automatische Korrektur für getippte und diktierte Texte sowie Umschreiben in verschiedenen Stilen.")
+
+            Text("KI Anbieter", style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    providerId = AiProvider.OPENAI.id
+                    prefs.edit().putString(AiAssistant.KEY_PROVIDER, AiProvider.OPENAI.id).apply()
+                    status = "OpenAI ausgewählt"
+                }) { Text(if (provider == AiProvider.OPENAI) "OpenAI ✓" else "OpenAI") }
+                Button(onClick = {
+                    providerId = AiProvider.GROQ.id
+                    prefs.edit().putString(AiAssistant.KEY_PROVIDER, AiProvider.GROQ.id).apply()
+                    status = "Groq ausgewählt"
+                }) { Text(if (provider == AiProvider.GROQ) "Groq ✓" else "Groq") }
+            }
+
             Text(
-                "Die KI korrigiert Rechtschreibung, Grammatik und Zeichensetzung nach einer kurzen Schreibpause. " +
-                    "Größere Textblöcke aus Spracheingabe werden ebenfalls erkannt und korrigiert."
+                if (provider == AiProvider.OPENAI) {
+                    "OpenAI ist als Standard vorgesehen. GPT-5.6 Luna ist günstig für häufige kurze Korrekturen. Die OpenAI API wird getrennt von ChatGPT abgerechnet."
+                } else {
+                    "Groq bleibt als kostenlose Alternative verfügbar."
+                }
             )
 
             Row(
@@ -80,7 +109,7 @@ class AiSettingsActivity : ComponentActivity() {
             ) {
                 Column(modifier = Modifier.fillMaxWidth(0.80f)) {
                     Text("Automatische KI Korrektur", style = MaterialTheme.typography.titleMedium)
-                    Text("Passwortfelder, E-Mail/URL-Felder und Inkognito werden nicht an die KI gesendet.")
+                    Text("Passwortfelder, E-Mail/URL-Felder und Inkognito werden nicht automatisch an die KI gesendet.")
                 }
                 Switch(
                     checked = autoCorrection,
@@ -91,77 +120,82 @@ class AiSettingsActivity : ComponentActivity() {
                 )
             }
 
-            OutlinedTextField(
-                value = apiKey,
-                onValueChange = { apiKey = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Groq API Schlüssel") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-            )
-
-            Button(
-                onClick = {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://console.groq.com/keys")))
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Kostenlosen API Schlüssel erstellen")
+            if (provider == AiProvider.OPENAI) {
+                OutlinedTextField(
+                    value = openAiKey,
+                    onValueChange = { openAiKey = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("OpenAI API Schlüssel") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                )
+                Button(
+                    onClick = { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://platform.openai.com/api-keys"))) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("OpenAI API Schlüssel öffnen") }
+                OutlinedTextField(
+                    value = openAiModel,
+                    onValueChange = { openAiModel = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("OpenAI Modell") },
+                    supportingText = { Text("Standard: ${AiAssistant.DEFAULT_OPENAI_MODEL}") },
+                    singleLine = true,
+                )
+            } else {
+                OutlinedTextField(
+                    value = groqKey,
+                    onValueChange = { groqKey = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Groq API Schlüssel") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                )
+                Button(
+                    onClick = { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://console.groq.com/keys"))) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Kostenlosen Groq API Schlüssel erstellen") }
+                OutlinedTextField(
+                    value = groqModel,
+                    onValueChange = { groqModel = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Groq Modell") },
+                    supportingText = { Text("Standard: ${AiAssistant.DEFAULT_GROQ_MODEL}") },
+                    singleLine = true,
+                )
             }
 
-            OutlinedTextField(
-                value = model,
-                onValueChange = { model = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("KI Modell") },
-                supportingText = { Text("Standard: ${AiAssistant.DEFAULT_MODEL}") },
-                singleLine = true,
-            )
+            Button(onClick = {
+                save()
+                status = "Einstellungen gespeichert"
+            }, modifier = Modifier.fillMaxWidth()) { Text("Speichern") }
 
-            Button(
-                onClick = {
-                    save()
-                    status = "Einstellungen gespeichert"
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Speichern")
-            }
-
-            Button(
-                onClick = {
-                    save()
-                    status = "Verbindung wird geprüft …"
-                    scope.launch {
-                        status = try {
-                            val result = AiAssistant.testConnection(apiKey.trim(), model.trim().ifBlank { AiAssistant.DEFAULT_MODEL })
-                            "Verbindung erfolgreich. Test: $result"
-                        } catch (e: Throwable) {
-                            e.message ?: "Verbindung fehlgeschlagen"
-                        }
+            Button(onClick = {
+                save()
+                status = "Verbindung wird geprüft …"
+                val key = if (provider == AiProvider.OPENAI) openAiKey else groqKey
+                val model = if (provider == AiProvider.OPENAI) {
+                    openAiModel.ifBlank { AiAssistant.DEFAULT_OPENAI_MODEL }
+                } else {
+                    groqModel.ifBlank { AiAssistant.DEFAULT_GROQ_MODEL }
+                }
+                scope.launch {
+                    status = try {
+                        val result = AiAssistant.testConnection(provider.id, key.trim(), model.trim())
+                        "Verbindung erfolgreich. Test: $result"
+                    } catch (e: Throwable) {
+                        e.message ?: "Verbindung fehlgeschlagen"
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("KI Verbindung testen")
-            }
+                }
+            }, modifier = Modifier.fillMaxWidth()) { Text("KI Verbindung testen") }
 
-            if (status.isNotBlank()) {
-                Text(status, style = MaterialTheme.typography.bodyLarge)
-            }
+            if (status.isNotBlank()) Text(status, style = MaterialTheme.typography.bodyLarge)
 
             Spacer(Modifier.height(8.dp))
             Text("Stil Funktionen", style = MaterialTheme.typography.titleLarge)
-            Text(
-                "In der Smartbar stehen Korrigieren, Freundlich, Professionell, Locker, Humorvoll, Ironisch, Kurz, Einfach und Direkt zur Verfügung. " +
-                    "Wenn Text markiert ist, wird nur die Markierung bearbeitet. Ohne Markierung wird der aktuelle Satz verwendet."
-            )
+            Text("Korrigieren, Freundlich, Professionell, Locker, Humorvoll, Ironisch, Kurz, Einfach und Direkt. Markierter Text wird gezielt bearbeitet; sonst der aktuelle Satz.")
 
             Text("Datenschutz", style = MaterialTheme.typography.titleLarge)
-            Text(
-                "Auf diesem Gerät ist die Gemini Nano Korrektur von Android derzeit nicht unterstützt. Deshalb wird für die KI Funktion der aktuelle Satz oder der markierte Text über HTTPS an Groq gesendet. " +
-                    "Die automatische Funktion ist in sensiblen Eingabefeldern und im Inkognito Modus gesperrt."
-            )
+            Text("Für KI Funktionen wird nur der aktuelle Satz oder markierte Text per HTTPS an den ausgewählten Anbieter gesendet. Automatische Verarbeitung ist in sensiblen Feldern und im Inkognito Modus gesperrt.")
         }
     }
 }
