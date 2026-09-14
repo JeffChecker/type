@@ -1,4 +1,4 @@
-name: FlorisBoard DE v0.5.2
+name: FlorisBoard DE v0.5.2 Stable
 
 permissions:
   contents: write
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: florisboard-de-v052
+  group: florisboard-de-v052-stable
   cancel-in-progress: true
 
 jobs:
@@ -42,6 +42,21 @@ jobs:
       - name: Apply complete German localization
         run: python3 controller/florisboard-de/make_german.py
 
+      - name: Restore true stable package and sign release build
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('florisboard/app/build.gradle.kts')
+          s = p.read_text(encoding='utf-8')
+          marker = '        named("release") {\n'
+          replacement = '        named("release") {\n            signingConfig = signingConfigs.getByName("debug")\n'
+          if marker not in s:
+              raise SystemExit('release build block not found')
+          s = s.replace(marker, replacement, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+          grep -n -A8 'named("release")' florisboard/app/build.gradle.kts
+
       - name: Enable locally rebuilt JetPref snapshot
         run: |
           sed -i 's@        // mavenLocal()@        mavenLocal()@' florisboard/settings.gradle.kts
@@ -65,27 +80,32 @@ jobs:
             :datastore-ui:publishToMavenLocal \
             :material-ui:publishToMavenLocal
 
-      - name: Build German APK
+      - name: Build stable German APK
         working-directory: florisboard
-        run: ./gradlew clean assembleDebug
+        run: ./gradlew clean assembleRelease
 
-      - name: Prepare APK
-        run: cp florisboard/app/build/outputs/apk/debug/app-debug.apk FlorisBoard-DE-v0.5.2.apk
+      - name: Verify stable package and APK
+        run: |
+          APK='florisboard/app/build/outputs/apk/release/app-release.apk'
+          test -f "$APK"
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump badging "$APK" | head -20
+          cp "$APK" FlorisBoard-0.5.2-Stable-DE.apk
+          sha256sum FlorisBoard-0.5.2-Stable-DE.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FlorisBoard-DE-v0.5.2
-          path: FlorisBoard-DE-v0.5.2.apk
+          name: FlorisBoard-0.5.2-Stable-DE
+          path: FlorisBoard-0.5.2-Stable-DE.apk
 
       - name: Publish APK as GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="florisboard-de-v0.5.2"
+          TAG="florisboard-de-v0.5.2-stable"
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
-              --title "FlorisBoard DE v0.5.2" \
-              --notes "Deutsche Sonderversion auf Basis des FlorisBoard Tags v0.5.2 (Upstream Commit 2e82060251897226c0739b9f52d1d051b02305fb). Die vorhandene deutsche Übersetzung wurde um alle 119 in v0.5.2 fehlenden UI Texte ergänzt. Der inzwischen entfernte JetPref Snapshot 20251119T222500Z-SNAPSHOT wird reproduzierbar aus seinem ursprünglichen Quellcommit d6e12dda6517345dacc3682aa476a8448a71c34b lokal neu gebaut. Tastaturfunktionen, Layouts und Sprachdaten bleiben erhalten. Eigenes Paket: dev.patrickgold.florisboard.de. FlorisBoard und JetPref stehen unter der Apache License 2.0."
+              --title "FlorisBoard v0.5.2 Stable Deutsch" \
+              --notes "Neu gebaut aus der echten FlorisBoard v0.5.2 Release/Stable Variante. Originalname FlorisBoard, Original Paketkennung dev.patrickgold.florisboard, stabile Icons und sämtliche Funktionen der v0.5.2 Codebasis bleiben erhalten. Die vorhandene deutsche Übersetzung wurde um die 119 fehlenden UI Texte ergänzt. Der entfernte JetPref Snapshot wird aus seinem originalen Quellcommit reproduziert. Die APK ist mit einem eigenen Build Schlüssel signiert und kann daher nicht als Update über eine offiziell signierte FlorisBoard Installation installiert werden; diese muss vorher deinstalliert werden."
           fi
-          gh release upload "$TAG" FlorisBoard-DE-v0.5.2.apk --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$TAG" FlorisBoard-0.5.2-Stable-DE.apk --repo "$GITHUB_REPOSITORY" --clobber
