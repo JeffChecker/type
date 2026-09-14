@@ -1,4 +1,4 @@
-name: FlorisBoard DE v0.5.2 Stable
+name: FlorisBoard AI DE v0.5.2 Stable
 
 permissions:
   contents: write
@@ -8,11 +8,12 @@ on:
     branches: [ main ]
     paths:
       - 'florisboard-de/**'
+      - 'florisboard-ai/**'
       - '.github/workflows/florisboard-de.yml'
   workflow_dispatch:
 
 concurrency:
-  group: florisboard-de-v052-stable
+  group: florisboard-ai-de-v052-stable
   cancel-in-progress: true
 
 jobs:
@@ -41,6 +42,9 @@ jobs:
 
       - name: Apply complete German localization
         run: python3 controller/florisboard-de/make_german.py
+
+      - name: Add AI proofreading and style assistant
+        run: python3 controller/florisboard-ai/apply_ai.py
 
       - name: Restore true stable package and sign release build
         run: |
@@ -80,32 +84,32 @@ jobs:
             :datastore-ui:publishToMavenLocal \
             :material-ui:publishToMavenLocal
 
-      - name: Build stable German APK
+      - name: Build stable German AI APK
         working-directory: florisboard
         run: ./gradlew clean assembleRelease
 
-      - name: Verify stable package and APK
+      - name: Verify package and APK
         run: |
           APK='florisboard/app/build/outputs/apk/release/app-release.apk'
           test -f "$APK"
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump badging "$APK" | head -20
-          cp "$APK" FlorisBoard-0.5.2-Stable-DE.apk
-          sha256sum FlorisBoard-0.5.2-Stable-DE.apk
+          cp "$APK" FlorisBoard-0.5.2-AI-DE.apk
+          sha256sum FlorisBoard-0.5.2-AI-DE.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FlorisBoard-0.5.2-Stable-DE
-          path: FlorisBoard-0.5.2-Stable-DE.apk
+          name: FlorisBoard-0.5.2-AI-DE
+          path: FlorisBoard-0.5.2-AI-DE.apk
 
       - name: Publish APK as GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="florisboard-de-v0.5.2-stable"
+          TAG="florisboard-ai-de-v0.5.2"
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
-              --title "FlorisBoard v0.5.2 Stable Deutsch" \
-              --notes "Neu gebaut aus der echten FlorisBoard v0.5.2 Release/Stable Variante. Originalname FlorisBoard, Original Paketkennung dev.patrickgold.florisboard, stabile Icons und sämtliche Funktionen der v0.5.2 Codebasis bleiben erhalten. Die vorhandene deutsche Übersetzung wurde um die 119 fehlenden UI Texte ergänzt. Der entfernte JetPref Snapshot wird aus seinem originalen Quellcommit reproduziert. Die APK ist mit einem eigenen Build Schlüssel signiert und kann daher nicht als Update über eine offiziell signierte FlorisBoard Installation installiert werden; diese muss vorher deinstalliert werden."
+              --title "FlorisBoard v0.5.2 Deutsch + KI" \
+              --notes "FlorisBoard v0.5.2 Stable mit vollständiger deutscher Oberfläche und zusätzlichem KI Schreibassistenten. Die ursprüngliche Autokorrektur Schaltfläche von v0.5.2 war nur ein nicht implementierter Platzhalter und wurde durch eine echte KI Autokorrektur ersetzt. Korrektur erfolgt nach kurzer Schreibpause und berücksichtigt auch größere Textblöcke aus Spracheingabe. Manuelle Stilfunktionen: Korrigieren, Freundlich, Professionell, Locker, Humorvoll, Ironisch, Kurz, Einfach und Direkt. Als KI Backend wird Groq verwendet; der Nutzer trägt seinen eigenen kostenlosen API Schlüssel in den KI Einstellungen ein. Passwort-, E-Mail/URL-Felder, rohe Eingabefelder und Inkognito werden nicht automatisch an die KI gesendet. Original Paketkennung dev.patrickgold.florisboard, Stable/Release Build. Eigener Signierschlüssel: eine offiziell signierte oder anders signierte FlorisBoard Installation muss vor der Installation gegebenenfalls deinstalliert werden."
           fi
-          gh release upload "$TAG" FlorisBoard-0.5.2-Stable-DE.apk --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$TAG" FlorisBoard-0.5.2-AI-DE.apk --repo "$GITHUB_REPOSITORY" --clobber
