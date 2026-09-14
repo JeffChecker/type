@@ -194,7 +194,7 @@ class AiAssistant(private val context: Context) {
         if (trimmed.count { it.isLetter() } < 3) return
 
         autoJob?.cancel()
-        val endsSentence = trimmed.lastOrNull() in charArrayOf('.', '!', '?', '…')
+        val endsSentence = trimmed.last() in charArrayOf('.', '!', '?', '…')
         val waitMs = when {
             voiceLike -> 450L
             endsSentence -> 550L
