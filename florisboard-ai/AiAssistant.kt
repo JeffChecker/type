@@ -19,6 +19,8 @@ class AiAssistant(private val context: Context) {
     companion object {
         const val PREFS_NAME = "floris_ai"
         const val KEY_AUTO_CORRECTION = "auto_correction"
+        const val KEY_AUTO_DELAY_MS = "auto_delay_ms"
+        const val DEFAULT_AUTO_DELAY_MS = 5_000L
         const val KEY_API_KEY = AiBackend.KEY_GROQ_API_KEY
         const val KEY_MODEL = AiBackend.LEGACY_KEY_MODEL
         const val DEFAULT_MODEL = AiBackend.AUTO_MODEL
@@ -78,18 +80,20 @@ class AiAssistant(private val context: Context) {
 
         autoJob?.cancel()
         val endsSentence = trimmed.last() in charArrayOf('.', '!', '?', '…')
+        val baseDelay = prefs.getLong(KEY_AUTO_DELAY_MS, DEFAULT_AUTO_DELAY_MS).coerceIn(2_500L, 10_000L)
         val waitMs = when {
-            voiceLike -> 450L
-            endsSentence -> 550L
-            else -> 1_250L
+            voiceLike -> (baseDelay + 1_000L).coerceAtMost(10_000L)
+            endsSentence -> baseDelay
+            else -> (baseDelay + 1_500L).coerceAtMost(10_000L)
         }
         autoJob = scope.launch {
             delay(waitMs)
-            val corrected = try {
+            val correctedRaw = try {
                 AiBackend.request(appContext, AiStyle.CORRECT, target.text, voiceLike)
             } catch (_: Throwable) {
                 return@launch
             }
+            val corrected = preserveAutomaticEnding(target.text, correctedRaw)
             if (corrected == target.text || corrected.isBlank()) return@launch
             if (corrected.length > target.text.length * 2 + 80) return@launch
             applyIfStillCurrent(target, corrected)
@@ -110,17 +114,17 @@ class AiAssistant(private val context: Context) {
             openSettings()
             return
         }
-        val target = selectedOrCurrentSentenceTarget(editorInstance.activeContent)
+        val target = selectedOrCurrentParagraphTarget(editorInstance.activeContent)
         if (target == null || target.text.isBlank()) {
             toast("Kein Text zum Bearbeiten gefunden")
             return
         }
-        if (target.text.length > 1_500) {
+        if (target.text.length > 2_500) {
             toast("Bitte einen kürzeren Text oder Absatz markieren")
             return
         }
         autoJob?.cancel()
-        toast("KI bearbeitet den Text …")
+        toast("KI versteht und bearbeitet den Text …")
         scope.launch {
             try {
                 val result = AiBackend.request(appContext, style, target.text, voiceLike = false)
@@ -149,7 +153,7 @@ class AiAssistant(private val context: Context) {
 
     private data class Target(val start: Int, val end: Int, val text: String)
 
-    private fun selectedOrCurrentSentenceTarget(content: EditorContent): Target? {
+    private fun selectedOrCurrentParagraphTarget(content: EditorContent): Target? {
         if (!content.localSelection.isValid || content.offset < 0) return null
         if (content.selectedText.isNotEmpty()) {
             return Target(
@@ -158,7 +162,23 @@ class AiAssistant(private val context: Context) {
                 text = content.selectedText,
             )
         }
-        return currentSentenceTarget(content)
+        return currentParagraphTarget(content)
+    }
+
+    private fun currentParagraphTarget(content: EditorContent): Target? {
+        if (!content.localSelection.isValid || content.offset < 0) return null
+        val cursor = content.localSelection.end.coerceIn(0, content.text.length)
+        var start = content.text.lastIndexOf('\n', (cursor - 1).coerceAtLeast(0)) + 1
+        var end = content.text.indexOf('\n', cursor)
+        if (end < 0) end = content.text.length
+        while (start < end && content.text[start].isWhitespace()) start++
+        while (end > start && content.text[end - 1].isWhitespace()) end--
+        if (start >= end) return null
+        return Target(
+            start = content.offset + start,
+            end = content.offset + end,
+            text = content.text.substring(start, end),
+        )
     }
 
     private fun currentSentenceTarget(content: EditorContent): Target? {
@@ -180,6 +200,27 @@ class AiAssistant(private val context: Context) {
             end = content.offset + end,
             text = content.text.substring(start, end),
         )
+    }
+
+    /**
+     * Automatische Korrektur darf die Absicht des Nutzers am Satzende nicht verändern.
+     * Ein vorhandenes !, ?, ?!, !! usw. bleibt exakt erhalten. Hat der Nutzer noch kein
+     * Satzzeichen gesetzt, fügt die KI auch keines ungefragt hinzu.
+     */
+    private fun preserveAutomaticEnding(original: String, corrected: String): String {
+        val punctuation = charArrayOf('.', '!', '?', '…')
+        val originalTrimmed = original.trimEnd()
+        val correctedTrimmed = corrected.trimEnd()
+        if (correctedTrimmed.isBlank()) return corrected
+
+        val originalEnding = originalTrimmed.takeLastWhile { it in punctuation }
+        val correctedBase = correctedTrimmed.dropLastWhile { it in punctuation }.trimEnd()
+
+        return if (originalEnding.isNotEmpty()) {
+            correctedBase + originalEnding
+        } else {
+            correctedBase
+        }
     }
 
     private suspend fun applyIfStillCurrent(target: Target, replacement: String) {
@@ -204,15 +245,15 @@ class AiAssistant(private val context: Context) {
 }
 
 enum class AiStyle(val instruction: String) {
-    CORRECT(" Korrigiere ausschließlich Rechtschreibung, Grammatik, Groß- und Kleinschreibung sowie Zeichensetzung. Bewahre Bedeutung, Namen, Zahlen und Wortwahl soweit möglich unverändert."),
-    FRIENDLY(" Formuliere denselben Inhalt freundlich, natürlich, respektvoll und nahbar."),
-    PROFESSIONAL(" Formuliere denselben Inhalt professionell, klar, sachlich und geschäftlich, ohne unnötig komplizierte Sprache."),
-    CASUAL(" Formuliere denselben Inhalt locker, natürlich und alltagstauglich."),
-    HUMOROUS(" Formuliere denselben Inhalt humorvoll und sympathisch. Die Aussage muss erhalten bleiben und darf nicht beleidigend werden."),
-    IRONIC(" Formuliere denselben Inhalt mit klar erkennbarer leichter Ironie, ohne die Aussage zu verfälschen oder Personen herabzusetzen."),
-    SHORT(" Kürze den Text deutlich, ohne wichtige Informationen zu verlieren."),
-    SIMPLE(" Formuliere den Text in einfacher, leicht verständlicher Sprache mit kurzen Sätzen."),
-    DIRECT(" Formuliere den Text direkt und klar, ohne unnötige Füllwörter, aber weiterhin höflich."),
+    CORRECT(" Erfasse zuerst den beabsichtigten Sinn des Textes. Korrigiere Rechtschreibung, Grammatik, Groß- und Kleinschreibung, Zeichensetzung und offensichtliche Diktat- oder Worterkennungsfehler anhand des Satzkontexts. Verändere keine Aussage, Namen, Zahlen, Anrede oder Tonlage. Erfinde keine Informationen. Bewahre ein vorhandenes abschließendes !, ?, ?!, !! oder … exakt und füge am Ende kein Satzzeichen hinzu, wenn der Nutzer noch keines gesetzt hat."),
+    FRIENDLY(" Erfasse den vollständigen Inhalt und formuliere ihn deutlich freundlicher, natürlicher, respektvoll und nahbar. Alle wichtigen Aussagen und Fakten müssen erhalten bleiben."),
+    PROFESSIONAL(" Erfasse den vollständigen Inhalt und formuliere ihn klar, professionell, sachlich und gut strukturiert. Korrigiere dabei unklare Formulierungen, ohne Fakten oder Absichten zu verändern."),
+    CASUAL(" Erfasse den vollständigen Inhalt und formuliere ihn deutlich lockerer, natürlicher und alltagstauglich. Die Kernaussage muss vollständig erhalten bleiben."),
+    HUMOROUS(" Erfasse den vollständigen Inhalt und formuliere ihn erkennbar humorvoll, pointiert und sympathisch. Der Witz darf deutlicher sein, aber Fakten und Kernaussage dürfen nicht erfunden oder verfälscht werden."),
+    IRONIC(" Erfasse den vollständigen Inhalt und formuliere ihn klar erkennbar sarkastisch und ironisch, pointiert und trocken, aber nicht beleidigend. Die eigentliche Aussage und alle Fakten müssen erhalten bleiben."),
+    SHORT(" Erfasse zuerst die Kernaussage und kürze den Text deutlich. Alle wichtigen Informationen, Namen, Zahlen und Handlungsaufforderungen müssen erhalten bleiben."),
+    SIMPLE(" Erfasse den vollständigen Inhalt und formuliere ihn in sehr einfacher, leicht verständlicher Sprache mit kurzen, klaren Sätzen. Keine wichtige Information weglassen."),
+    DIRECT(" Erfasse die Kernaussage und formuliere sie deutlich direkter, klarer und ohne unnötige Füllwörter. Fakten und Absicht vollständig erhalten und weiterhin angemessen höflich bleiben."),
 }
 
 class AiException(message: String) : Exception(message)
