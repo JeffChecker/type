@@ -19,7 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,7 +26,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -57,7 +55,6 @@ class AiSettingsActivity : ComponentActivity() {
                     ?: AiBackend.AUTO_MODEL
             )
         }
-        var autoCorrection by remember { mutableStateOf(prefs.getBoolean(AiAssistant.KEY_AUTO_CORRECTION, true)) }
         var status by remember { mutableStateOf("") }
         var savedProviderId by remember { mutableStateOf(providerId) }
         var savedModelId by remember {
@@ -118,7 +115,6 @@ class AiSettingsActivity : ComponentActivity() {
                 .putString(AiBackend.KEY_GEMINI_MODEL, geminiModel.trim().ifBlank { AiBackend.AUTO_MODEL })
                 .putString(AiBackend.KEY_CLAUDE_MODEL, claudeModel.trim().ifBlank { AiBackend.AUTO_MODEL })
                 .putString(AiBackend.KEY_GROQ_MODEL, groqModel.trim().ifBlank { AiBackend.AUTO_MODEL })
-                .putBoolean(AiAssistant.KEY_AUTO_CORRECTION, autoCorrection)
                 .commit()
             if (ok) {
                 savedProviderId = providerId
@@ -152,7 +148,12 @@ class AiSettingsActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text("KI Schreibassistent", style = MaterialTheme.typography.headlineSmall)
-            Text("Automatische Korrektur für getippte und diktierte Texte. Dazu Stilfunktionen und lokale Übersetzung.")
+            Text("Die KI verändert deinen Text nur noch, wenn du selbst eine Taste in der Smartbar drückst. Es gibt keine zeitgesteuerte Autokorrektur mehr.")
+
+            Text("Bedienung", style = MaterialTheme.typography.titleMedium)
+            Text("KI korrigieren: prüft den aktuellen Absatz oder markierten Text auf Sinn, Sprache, Diktatfehler und Zeichensetzung. Deine eigenen Satzendzeichen wie !, ?, ?! oder !! bleiben erhalten.")
+            Text("Stil: öffnet ein Auswahlmenü mit Sarkastisch, Flirtend, Verführerisch, Stilvoll, Geschäftlich, Professionell, Freundlich, Persönlich, Du-Form, Sie-Form, Locker, Humorvoll, Direkt, Kurz und Einfach.")
+            Text("Prompt+: verbessert deinen Rohtext zu einem klaren KI Prompt, ohne neue Fakten zu erfinden.")
 
             Text("KI Anbieter", style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -162,28 +163,6 @@ class AiSettingsActivity : ComponentActivity() {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { chooseProvider(AiProvider.CLAUDE) }) { Text(if (provider == AiProvider.CLAUDE) "Claude ✓" else "Claude") }
                 Button(onClick = { chooseProvider(AiProvider.GROQ) }) { Text(if (provider == AiProvider.GROQ) "Groq ✓" else "Groq") }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(modifier = Modifier.fillMaxWidth(0.80f)) {
-                    Text("Automatische KI Korrektur", style = MaterialTheme.typography.titleMedium)
-                    Text("Passwortfelder, E-Mail/URL-Felder, rohe Eingabefelder und Inkognito werden nicht an die Cloud-KI gesendet.")
-                }
-                Switch(
-                    checked = autoCorrection,
-                    onCheckedChange = {
-                        autoCorrection = it
-                        status = if (save()) {
-                            if (it) "Automatische KI Korrektur ist aktiv" else "Automatische KI Korrektur ist aus"
-                        } else {
-                            "Einstellung konnte nicht gespeichert werden"
-                        }
-                    },
-                )
             }
 
             OutlinedTextField(
@@ -301,14 +280,11 @@ class AiSettingsActivity : ComponentActivity() {
             }, modifier = Modifier.fillMaxWidth()) { Text("Speichern und schließen") }
 
             Spacer(Modifier.height(8.dp))
-            Text("Stil Funktionen", style = MaterialTheme.typography.titleLarge)
-            Text("Korrigieren, Freundlich, Professionell, Locker, Humorvoll, Ironisch, Kurz, Einfach und Direkt. Markierter Text wird gezielt bearbeitet; sonst der aktuelle Satz.")
-
             Text("Übersetzen", style = MaterialTheme.typography.titleLarge)
             Text("Die Übersetzung läuft lokal mit ML Kit. Die Ausgangssprache wird automatisch erkannt. Übersetzt wird in die aktuell aktive FlorisBoard Tastatursprache. Sprachmodelle werden bei Bedarf einmalig geladen.")
 
             Text("Datenschutz", style = MaterialTheme.typography.titleLarge)
-            Text("Cloud-KI: Nur der aktuelle Satz oder markierte Text wird per HTTPS an den ausgewählten Anbieter gesendet. Übersetzen läuft nach dem Modelldownload lokal auf dem Gerät.")
+            Text("Cloud-KI: Nur der aktuelle Absatz oder markierte Text wird per HTTPS an den ausgewählten Anbieter gesendet, und nur nachdem du eine KI Taste drückst. Übersetzen läuft nach dem Modelldownload lokal auf dem Gerät.")
         }
     }
 }
