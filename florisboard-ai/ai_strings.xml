@@ -18,6 +18,8 @@
     <string name="quick_action__ai_simple__tooltip">Text in einfacher Sprache formulieren</string>
     <string name="quick_action__ai_direct">Direkt</string>
     <string name="quick_action__ai_direct__tooltip">Text direkt und klar formulieren</string>
+    <string name="quick_action__ai_prompt">Prompt verbessern</string>
+    <string name="quick_action__ai_prompt__tooltip">Rohtext in einen klaren und wirksamen KI Prompt umwandeln</string>
     <string name="quick_action__ai_settings">KI Einstellungen</string>
     <string name="quick_action__ai_settings__tooltip">KI Einstellungen und API Schlüssel öffnen</string>
 </resources>
