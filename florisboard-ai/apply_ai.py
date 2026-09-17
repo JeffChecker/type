@@ -49,7 +49,8 @@ s = replace_once(
     "    const val AI_SHORT =                    -316\n"
     "    const val AI_SIMPLE =                   -317\n"
     "    const val AI_DIRECT =                   -318\n"
-    "    const val AI_SETTINGS =                 -319\n",
+    "    const val AI_SETTINGS =                 -319\n"
+    "    const val AI_PROMPT =                   -320\n",
     "KeyCode AI constants",
 )
 write(path, s)
@@ -70,6 +71,7 @@ s = replace_once(
     "                AI_SHORT,\n"
     "                AI_SIMPLE,\n"
     "                AI_DIRECT,\n"
+    "                AI_PROMPT,\n"
     "                AI_SETTINGS,\n",
     "TextKeyData InternalKeys",
 )
@@ -90,6 +92,7 @@ addition = marker + '''
         val AI_SHORT = TextKeyData(KeyType.FUNCTION, KeyCode.AI_SHORT, "ai_short")
         val AI_SIMPLE = TextKeyData(KeyType.FUNCTION, KeyCode.AI_SIMPLE, "ai_simple")
         val AI_DIRECT = TextKeyData(KeyType.FUNCTION, KeyCode.AI_DIRECT, "ai_direct")
+        val AI_PROMPT = TextKeyData(KeyType.FUNCTION, KeyCode.AI_PROMPT, "ai_prompt")
         val AI_SETTINGS = TextKeyData(KeyType.FUNCTION, KeyCode.AI_SETTINGS, "ai_settings")
 '''
 s = replace_once(s, marker, addition, "TextKeyData AI definitions")
@@ -111,6 +114,7 @@ s = replace_once(
     "            KeyCode.AI_SHORT -> R.string.quick_action__ai_short\n"
     "            KeyCode.AI_SIMPLE -> R.string.quick_action__ai_simple\n"
     "            KeyCode.AI_DIRECT -> R.string.quick_action__ai_direct\n"
+    "            KeyCode.AI_PROMPT -> R.string.quick_action__ai_prompt\n"
     "            KeyCode.AI_SETTINGS -> R.string.quick_action__ai_settings\n",
     "QuickAction display names",
 )
@@ -127,6 +131,7 @@ s = replace_once(
     "            KeyCode.AI_SHORT -> R.string.quick_action__ai_short__tooltip\n"
     "            KeyCode.AI_SIMPLE -> R.string.quick_action__ai_simple__tooltip\n"
     "            KeyCode.AI_DIRECT -> R.string.quick_action__ai_direct__tooltip\n"
+    "            KeyCode.AI_PROMPT -> R.string.quick_action__ai_prompt__tooltip\n"
     "            KeyCode.AI_SETTINGS -> R.string.quick_action__ai_settings__tooltip\n",
     "QuickAction tooltips",
 )
@@ -150,10 +155,11 @@ s = replace_once(
             KeyCode.AI_PROFESSIONAL -> "Pro"
             KeyCode.AI_CASUAL -> "Locker"
             KeyCode.AI_HUMOROUS -> "Humor"
-            KeyCode.AI_IRONIC -> "Ironie"
+            KeyCode.AI_IRONIC -> "Sark."
             KeyCode.AI_SHORT -> "Kurz"
             KeyCode.AI_SIMPLE -> "Einfach"
             KeyCode.AI_DIRECT -> "Direkt"
+            KeyCode.AI_PROMPT -> "Prompt+"
             else -> null
 ''',
     "ComputingEvaluator AI labels",
@@ -188,6 +194,7 @@ s = replace_once(
     "                QuickAction.InsertKey(TextKeyData.AI_SHORT),\n"
     "                QuickAction.InsertKey(TextKeyData.AI_SIMPLE),\n"
     "                QuickAction.InsertKey(TextKeyData.AI_DIRECT),\n"
+    "                QuickAction.InsertKey(TextKeyData.AI_PROMPT),\n"
     "                QuickAction.InsertKey(TextKeyData.AI_SETTINGS),\n",
     "QuickActionArrangement defaults",
 )
@@ -273,6 +280,7 @@ s = replace_once(
     "            KeyCode.AI_SHORT -> runAiStyle(AiStyle.SHORT)\n"
     "            KeyCode.AI_SIMPLE -> runAiStyle(AiStyle.SIMPLE)\n"
     "            KeyCode.AI_DIRECT -> runAiStyle(AiStyle.DIRECT)\n"
+    "            KeyCode.AI_PROMPT -> runAiStyle(AiStyle.PROMPT)\n"
     "            KeyCode.AI_SETTINGS -> aiAssistant.openSettings()\n",
     "KeyboardManager AI key handling",
 )
@@ -302,4 +310,4 @@ s = replace_once(
 write(path, s)
 
 print("AI patch applied to FlorisBoard v0.5.2")
-print("Features: debounced automatic proofreading, voice-like correction, 9 rewrite styles, Groq settings/test screen")
+print("Features: delayed contextual proofreading, voice correction, 10 rewrite/prompt styles, dynamic AI providers")
