@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ki-tastatur-beta-v1
+  group: ki-tastatur-beta-v1-product-ui
   cancel-in-progress: true
 
 jobs:
