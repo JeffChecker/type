@@ -1,4 +1,4 @@
-name: KI Tastatur v0.5.2 v4
+name: KI Tastatur Beta v1
 
 permissions:
   contents: write
@@ -13,11 +13,11 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ki-tastatur-v052-v4
+  group: ki-tastatur-beta-v1
   cancel-in-progress: true
 
 jobs:
-  build-v4:
+  build-beta-v1:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout controller repository
@@ -25,7 +25,7 @@ jobs:
         with:
           path: controller
 
-      - name: Checkout exact FlorisBoard v0.5.2 source
+      - name: Checkout FlorisBoard base source
         uses: actions/checkout@v4
         with:
           repository: florisboard/florisboard
@@ -55,17 +55,21 @@ jobs:
       - name: Add local translation
         run: python3 controller/florisboard-ai/apply_translation.py
 
-      - name: Restore true stable package and sign release build
+      - name: Set Beta v1 version and sign release build
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path('florisboard/app/build.gradle.kts')
           s = p.read_text(encoding='utf-8')
-          marker = '        named("release") {\n'
-          replacement = '        named("release") {\n            signingConfig = signingConfigs.getByName("debug")\n'
-          if marker not in s:
+          release_marker = '        named("release") {\n'
+          release_replacement = '        named("release") {\n            signingConfig = signingConfigs.getByName("debug")\n'
+          if release_marker not in s:
               raise SystemExit('release build block not found')
-          s = s.replace(marker, replacement, 1)
+          s = s.replace(release_marker, release_replacement, 1)
+          version_marker = '        versionName = projectVersionName.substringBefore("-")\n'
+          if version_marker not in s:
+              raise SystemExit('versionName marker not found')
+          s = s.replace(version_marker, '        versionName = "1.0.0-beta1"\n', 1)
           p.write_text(s, encoding='utf-8')
           PY
 
@@ -92,7 +96,7 @@ jobs:
             :datastore-ui:publishToMavenLocal \
             :material-ui:publishToMavenLocal
 
-      - name: Build stable KI Tastatur v4 APK
+      - name: Build KI Tastatur Beta v1 APK
         working-directory: florisboard
         run: ./gradlew clean assembleRelease
 
@@ -101,23 +105,23 @@ jobs:
           APK='florisboard/app/build/outputs/apk/release/app-release.apk'
           test -f "$APK"
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump badging "$APK" | head -20
-          cp "$APK" KI-Tastatur-v0.5.2-v4.apk
-          sha256sum KI-Tastatur-v0.5.2-v4.apk
+          cp "$APK" KI-Tastatur-Beta-v1.apk
+          sha256sum KI-Tastatur-Beta-v1.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KI-Tastatur-v0.5.2-v4
-          path: KI-Tastatur-v0.5.2-v4.apk
+          name: KI-Tastatur-Beta-v1
+          path: KI-Tastatur-Beta-v1.apk
 
       - name: Publish APK as GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="ki-tastatur-v0.5.2-v4"
+          TAG="ki-tastatur-beta-v1"
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
-              --title "KI Tastatur v0.5.2 v4" \
-              --notes "KI Tastatur, basierend auf FlorisBoard v0.5.2 (Apache 2.0). Neue Bedienung: keine zeitgesteuerte Autokorrektur mehr. KI Korrektur startet nur nach bewusstem Druck auf die Smartbar Taste und berücksichtigt den ganzen Absatz sowie Diktatfehler und Sinnzusammenhang. Nutzer Satzzeichen wie !, ?, ?!, !! und … bleiben erhalten. Stil Taste mit Dropdown für Sarkastisch, Flirtend, Verführerisch/Zweideutig, Stilvoll, Geschäftlich, Professionell, Freundlich, Persönlich, Du-Form, Sie-Form, Locker, Humorvoll, Direkt, Kurz und Einfache Sprache. Prompt+ verbessert Rohtexte zu strukturierten KI Prompts. Übersetzen läuft lokal über ML Kit. Anbieter OpenAI, Gemini, Claude und Groq mit dynamischer Modellwahl. Texte werden bewusst natürlich und menschlich formuliert; typische KI Floskeln sowie unnötige Gedankenstriche und Bindestrich Konstruktionen werden vermieden."
+              --title "KI Tastatur Beta v1" \
+              --notes "Erste Beta der KI Tastatur. Basierend auf FlorisBoard (Apache 2.0). KI Korrektur startet nur auf Tastendruck und berücksichtigt Sinnzusammenhang, Diktatfehler und Zeichensetzung. Eigene Satzendzeichen bleiben erhalten. Stil Auswahl mit Sarkastisch, Flirtend, Verführerisch/Zweideutig, Stilvoll, Geschäftlich, Professionell, Freundlich, Persönlich, Du-Form, Sie-Form, Locker, Humorvoll, Direkt, Kurz und Einfache Sprache. Prompt+ verbessert Rohtexte zu strukturierten KI Prompts. Übersetzen läuft lokal über ML Kit. Unterstützt OpenAI, Gemini, Claude und Groq mit dynamischer Modellwahl. Texte werden natürlich und menschlich formuliert; typische KI Floskeln sowie unnötige Gedankenstriche und Bindestrich Konstruktionen werden vermieden."
           fi
-          gh release upload "$TAG" KI-Tastatur-v0.5.2-v4.apk --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$TAG" KI-Tastatur-Beta-v1.apk --repo "$GITHUB_REPOSITORY" --clobber
