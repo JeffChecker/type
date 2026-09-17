@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/ki-tastatur-logo.svg" width="180" alt="KI Tastatur Logo">
+</p>
+
 # KI Tastatur
 
 **Eine Android Tastatur mit integrierter KI für Korrektur, Stil, Prompts und Übersetzung.**
