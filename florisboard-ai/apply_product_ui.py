@@ -18,6 +18,15 @@ def replace_once(path: Path, old: str, new: str, label: str):
     path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
 
+def replace_all(path: Path, old: str, new: str, label: str):
+    text = path.read_text(encoding="utf-8")
+    count = text.count(old)
+    if count < 1:
+        raise SystemExit(f"Patch marker not found: {label}")
+    path.write_text(text.replace(old, new), encoding="utf-8")
+    print(f"{label}: replaced {count} occurrence(s)")
+
+
 # 1) Copy the dedicated AI toolbar into the actual app sources.
 ai_dir = SRC / "kotlin/dev/patrickgold/florisboard/ime/ai"
 ai_dir.mkdir(parents=True, exist_ok=True)
@@ -171,25 +180,27 @@ adaptive = '''<?xml version="1.0" encoding="utf-8"?>
 for name in ["ki_tastatur_icon.xml", "ki_tastatur_icon_round.xml"]:
     (RES / "mipmap-anydpi-v26" / name).write_text(adaptive, encoding="utf-8")
 
-# 4) Point the release build directly at the KI Tastatur icon resources.
+# 4) Point all aliases that were normalized to the old stable FlorisBoard icon
+# at the KI Tastatur identity. make_german.py intentionally normalizes debug
+# resources to stable first, so there can be more than one matching line here.
 gradle = APP / "build.gradle.kts"
-replace_once(
+replace_all(
     gradle,
-    '            resValue("mipmap", "floris_app_icon", "@mipmap/ic_app_icon_stable")\n',
-    '            resValue("mipmap", "floris_app_icon", "@mipmap/ki_tastatur_icon")\n',
-    "release launcher icon",
+    '@mipmap/ic_app_icon_stable")',
+    '@mipmap/ki_tastatur_icon")',
+    "launcher icon aliases",
 )
-replace_once(
+replace_all(
     gradle,
-    '            resValue("mipmap", "floris_app_icon_round", "@mipmap/ic_app_icon_stable_round")\n',
-    '            resValue("mipmap", "floris_app_icon_round", "@mipmap/ki_tastatur_icon_round")\n',
-    "release round launcher icon",
+    '@mipmap/ic_app_icon_stable_round")',
+    '@mipmap/ki_tastatur_icon_round")',
+    "round launcher icon aliases",
 )
-replace_once(
+replace_all(
     gradle,
-    '            resValue("drawable", "floris_app_icon_foreground", "@drawable/ic_app_icon_stable_foreground")\n',
-    '            resValue("drawable", "floris_app_icon_foreground", "@drawable/ki_tastatur_icon_foreground")\n',
-    "release launcher foreground",
+    '@drawable/ic_app_icon_stable_foreground")',
+    '@drawable/ki_tastatur_icon_foreground")',
+    "launcher foreground aliases",
 )
 
 print("KI Tastatur product UI integrated: fixed AI toolbar + full launcher icon branding")
