@@ -1,4 +1,4 @@
-name: FlorisBoard AI DE v0.5.2 v4
+name: KI Tastatur v0.5.2 v4
 
 permissions:
   contents: write
@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: florisboard-ai-de-v052-v4
+  group: ki-tastatur-v052-v4
   cancel-in-progress: true
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
         with:
           path: controller
 
-      - name: Checkout exact FlorisBoard v0.5.2
+      - name: Checkout exact FlorisBoard v0.5.2 source
         uses: actions/checkout@v4
         with:
           repository: florisboard/florisboard
@@ -42,6 +42,9 @@ jobs:
 
       - name: Apply complete German localization
         run: python3 controller/florisboard-de/make_german.py
+
+      - name: Apply KI Tastatur branding
+        run: python3 controller/florisboard-ai/apply_branding.py
 
       - name: Add manual AI correction, style menu and Prompt+
         run: python3 controller/florisboard-ai/apply_ai.py
@@ -89,7 +92,7 @@ jobs:
             :datastore-ui:publishToMavenLocal \
             :material-ui:publishToMavenLocal
 
-      - name: Build stable German AI v4 APK
+      - name: Build stable KI Tastatur v4 APK
         working-directory: florisboard
         run: ./gradlew clean assembleRelease
 
@@ -98,23 +101,23 @@ jobs:
           APK='florisboard/app/build/outputs/apk/release/app-release.apk'
           test -f "$APK"
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump badging "$APK" | head -20
-          cp "$APK" FlorisBoard-0.5.2-AI-DE-v4.apk
-          sha256sum FlorisBoard-0.5.2-AI-DE-v4.apk
+          cp "$APK" KI-Tastatur-v0.5.2-v4.apk
+          sha256sum KI-Tastatur-v0.5.2-v4.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FlorisBoard-0.5.2-AI-DE-v4
-          path: FlorisBoard-0.5.2-AI-DE-v4.apk
+          name: KI-Tastatur-v0.5.2-v4
+          path: KI-Tastatur-v0.5.2-v4.apk
 
       - name: Publish APK as GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="florisboard-ai-de-v0.5.2-v4"
+          TAG="ki-tastatur-v0.5.2-v4"
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
-              --title "FlorisBoard v0.5.2 Deutsch + KI v4" \
-              --notes "Neue Bedienung: keine zeitgesteuerte Autokorrektur mehr. KI Korrektur startet nur nach bewusstem Druck auf die Smartbar Taste und berücksichtigt den ganzen Absatz sowie Diktatfehler und Sinnzusammenhang. Nutzer Satzzeichen wie !, ?, ?!, !! und … bleiben erhalten. Neue Stil Taste mit Dropdown für Sarkastisch, Flirtend, Verführerisch/Zweideutig, Stilvoll, Geschäftlich, Professionell, Freundlich, Persönlich, Du-Form, Sie-Form, Locker, Humorvoll, Direkt, Kurz und Einfache Sprache. Neue Prompt+ Taste verbessert Rohtexte zu strukturierten KI Prompts. Übersetzen bleibt lokal über ML Kit. Anbieter OpenAI, Gemini, Claude und Groq mit dynamischer Modellwahl."
+              --title "KI Tastatur v0.5.2 v4" \
+              --notes "KI Tastatur, basierend auf FlorisBoard v0.5.2 (Apache 2.0). Neue Bedienung: keine zeitgesteuerte Autokorrektur mehr. KI Korrektur startet nur nach bewusstem Druck auf die Smartbar Taste und berücksichtigt den ganzen Absatz sowie Diktatfehler und Sinnzusammenhang. Nutzer Satzzeichen wie !, ?, ?!, !! und … bleiben erhalten. Stil Taste mit Dropdown für Sarkastisch, Flirtend, Verführerisch/Zweideutig, Stilvoll, Geschäftlich, Professionell, Freundlich, Persönlich, Du-Form, Sie-Form, Locker, Humorvoll, Direkt, Kurz und Einfache Sprache. Prompt+ verbessert Rohtexte zu strukturierten KI Prompts. Übersetzen läuft lokal über ML Kit. Anbieter OpenAI, Gemini, Claude und Groq mit dynamischer Modellwahl. Texte werden bewusst natürlich und menschlich formuliert; typische KI Floskeln sowie unnötige Gedankenstriche und Bindestrich Konstruktionen werden vermieden."
           fi
-          gh release upload "$TAG" FlorisBoard-0.5.2-AI-DE-v4.apk --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$TAG" KI-Tastatur-v0.5.2-v4.apk --repo "$GITHUB_REPOSITORY" --clobber
