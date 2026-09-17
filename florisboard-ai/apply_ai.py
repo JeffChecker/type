@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import re
 import shutil
 
 ROOT = Path("florisboard")
@@ -25,14 +24,18 @@ def replace_once(text, old, new, label):
     return text.replace(old, new, 1)
 
 
-# Copy the AI implementation and settings activity into the exact v0.5.2 source tree.
+# Copy AI implementation, settings, strings and Smartbar dropdown implementation.
 ai_dir = SRC / "kotlin/dev/patrickgold/florisboard/ime/ai"
 ai_dir.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(CTRL / "AiAssistant.kt", ai_dir / "AiAssistant.kt")
 shutil.copyfile(CTRL / "AiSettingsActivity.kt", ai_dir / "AiSettingsActivity.kt")
 shutil.copyfile(CTRL / "ai_strings.xml", SRC / "res/values/ai_strings.xml")
+shutil.copyfile(
+    CTRL / "QuickActionButton.kt",
+    SRC / "kotlin/dev/patrickgold/florisboard/ime/smartbar/quickaction/QuickActionButton.kt",
+)
 
-# Add dedicated key codes for manual AI actions.
+# Add dedicated key codes for manual AI actions and dropdown styles.
 path = SRC / "kotlin/dev/patrickgold/florisboard/ime/text/key/KeyCode.kt"
 s = read(path)
 s = replace_once(
@@ -50,12 +53,20 @@ s = replace_once(
     "    const val AI_SIMPLE =                   -317\n"
     "    const val AI_DIRECT =                   -318\n"
     "    const val AI_SETTINGS =                 -319\n"
-    "    const val AI_PROMPT =                   -320\n",
+    "    const val AI_PROMPT =                   -320\n"
+    "    const val AI_STYLE_MENU =               -321\n"
+    "    const val AI_FLIRTY =                   -322\n"
+    "    const val AI_ELEGANT =                  -323\n"
+    "    const val AI_BUSINESS =                 -324\n"
+    "    const val AI_DU =                       -325\n"
+    "    const val AI_SIE =                      -326\n"
+    "    const val AI_PERSONAL =                 -327\n"
+    "    const val AI_SUGGESTIVE =               -328\n",
     "KeyCode AI constants",
 )
 write(path, s)
 
-# Make key data instances available to the Smartbar quick action editor.
+# Make key data instances available to Smartbar and the dropdown menu.
 path = SRC / "kotlin/dev/patrickgold/florisboard/ime/text/keyboard/TextKeyData.kt"
 s = read(path)
 s = replace_once(
@@ -63,11 +74,19 @@ s = replace_once(
     "                TOGGLE_AUTOCORRECT,\n",
     "                TOGGLE_AUTOCORRECT,\n"
     "                AI_CORRECT,\n"
+    "                AI_STYLE_MENU,\n"
     "                AI_FRIENDLY,\n"
     "                AI_PROFESSIONAL,\n"
     "                AI_CASUAL,\n"
     "                AI_HUMOROUS,\n"
     "                AI_IRONIC,\n"
+    "                AI_FLIRTY,\n"
+    "                AI_SUGGESTIVE,\n"
+    "                AI_ELEGANT,\n"
+    "                AI_BUSINESS,\n"
+    "                AI_PERSONAL,\n"
+    "                AI_DU,\n"
+    "                AI_SIE,\n"
     "                AI_SHORT,\n"
     "                AI_SIMPLE,\n"
     "                AI_DIRECT,\n"
@@ -84,11 +103,19 @@ marker = '''        /** Predefined key data for [KeyCode.TOGGLE_AUTOCORRECT] */
 '''
 addition = marker + '''
         val AI_CORRECT = TextKeyData(KeyType.FUNCTION, KeyCode.AI_CORRECT, "ai_correct")
+        val AI_STYLE_MENU = TextKeyData(KeyType.FUNCTION, KeyCode.AI_STYLE_MENU, "ai_style_menu")
         val AI_FRIENDLY = TextKeyData(KeyType.FUNCTION, KeyCode.AI_FRIENDLY, "ai_friendly")
         val AI_PROFESSIONAL = TextKeyData(KeyType.FUNCTION, KeyCode.AI_PROFESSIONAL, "ai_professional")
         val AI_CASUAL = TextKeyData(KeyType.FUNCTION, KeyCode.AI_CASUAL, "ai_casual")
         val AI_HUMOROUS = TextKeyData(KeyType.FUNCTION, KeyCode.AI_HUMOROUS, "ai_humorous")
         val AI_IRONIC = TextKeyData(KeyType.FUNCTION, KeyCode.AI_IRONIC, "ai_ironic")
+        val AI_FLIRTY = TextKeyData(KeyType.FUNCTION, KeyCode.AI_FLIRTY, "ai_flirty")
+        val AI_SUGGESTIVE = TextKeyData(KeyType.FUNCTION, KeyCode.AI_SUGGESTIVE, "ai_suggestive")
+        val AI_ELEGANT = TextKeyData(KeyType.FUNCTION, KeyCode.AI_ELEGANT, "ai_elegant")
+        val AI_BUSINESS = TextKeyData(KeyType.FUNCTION, KeyCode.AI_BUSINESS, "ai_business")
+        val AI_PERSONAL = TextKeyData(KeyType.FUNCTION, KeyCode.AI_PERSONAL, "ai_personal")
+        val AI_DU = TextKeyData(KeyType.FUNCTION, KeyCode.AI_DU, "ai_du")
+        val AI_SIE = TextKeyData(KeyType.FUNCTION, KeyCode.AI_SIE, "ai_sie")
         val AI_SHORT = TextKeyData(KeyType.FUNCTION, KeyCode.AI_SHORT, "ai_short")
         val AI_SIMPLE = TextKeyData(KeyType.FUNCTION, KeyCode.AI_SIMPLE, "ai_simple")
         val AI_DIRECT = TextKeyData(KeyType.FUNCTION, KeyCode.AI_DIRECT, "ai_direct")
@@ -98,14 +125,15 @@ addition = marker + '''
 s = replace_once(s, marker, addition, "TextKeyData AI definitions")
 write(path, s)
 
-# Give AI actions readable names/tooltips in the existing action editor.
+# Give AI actions readable names/tooltips in the action editor.
 path = SRC / "kotlin/dev/patrickgold/florisboard/ime/smartbar/quickaction/QuickAction.kt"
 s = read(path)
 s = replace_once(
     s,
     "            KeyCode.TOGGLE_AUTOCORRECT -> R.string.quick_action__toggle_autocorrect\n",
-    "            KeyCode.TOGGLE_AUTOCORRECT -> R.string.quick_action__toggle_autocorrect\n"
+    "            KeyCode.TOGGLE_AUTOCORRECT -> R.string.quick_action__ai_correct\n"
     "            KeyCode.AI_CORRECT -> R.string.quick_action__ai_correct\n"
+    "            KeyCode.AI_STYLE_MENU -> R.string.quick_action__ai_style_menu\n"
     "            KeyCode.AI_FRIENDLY -> R.string.quick_action__ai_friendly\n"
     "            KeyCode.AI_PROFESSIONAL -> R.string.quick_action__ai_professional\n"
     "            KeyCode.AI_CASUAL -> R.string.quick_action__ai_casual\n"
@@ -121,8 +149,9 @@ s = replace_once(
 s = replace_once(
     s,
     "            KeyCode.TOGGLE_AUTOCORRECT -> R.string.quick_action__toggle_autocorrect__tooltip\n",
-    "            KeyCode.TOGGLE_AUTOCORRECT -> R.string.quick_action__toggle_autocorrect__tooltip\n"
+    "            KeyCode.TOGGLE_AUTOCORRECT -> R.string.quick_action__ai_correct__tooltip\n"
     "            KeyCode.AI_CORRECT -> R.string.quick_action__ai_correct__tooltip\n"
+    "            KeyCode.AI_STYLE_MENU -> R.string.quick_action__ai_style_menu__tooltip\n"
     "            KeyCode.AI_FRIENDLY -> R.string.quick_action__ai_friendly__tooltip\n"
     "            KeyCode.AI_PROFESSIONAL -> R.string.quick_action__ai_professional__tooltip\n"
     "            KeyCode.AI_CASUAL -> R.string.quick_action__ai_casual__tooltip\n"
@@ -137,7 +166,7 @@ s = replace_once(
 )
 write(path, s)
 
-# Show short labels on the Smartbar. AI settings keeps the normal Settings icon.
+# Short Smartbar labels.
 path = SRC / "kotlin/dev/patrickgold/florisboard/ime/keyboard/ComputingEvaluator.kt"
 s = read(path)
 s = replace_once(
@@ -151,6 +180,7 @@ s = replace_once(
                 evaluator.context()?.getString(R.string.key__view_keshida)
             }
             KeyCode.AI_CORRECT -> "AI✓"
+            KeyCode.AI_STYLE_MENU -> "Stil"
             KeyCode.AI_FRIENDLY -> "☺"
             KeyCode.AI_PROFESSIONAL -> "Pro"
             KeyCode.AI_CASUAL -> "Locker"
@@ -178,29 +208,21 @@ s = replace_once(
 )
 write(path, s)
 
-# Add AI actions to the default Smartbar action catalogue.
+# Keep the Smartbar compact: one correction button, one style dropdown, Prompt+ and settings.
 path = SRC / "kotlin/dev/patrickgold/florisboard/ime/smartbar/quickaction/QuickActionArrangement.kt"
 s = read(path)
 s = replace_once(
     s,
     "                QuickAction.InsertKey(TextKeyData.TOGGLE_AUTOCORRECT),\n",
     "                QuickAction.InsertKey(TextKeyData.TOGGLE_AUTOCORRECT),\n"
-    "                QuickAction.InsertKey(TextKeyData.AI_CORRECT),\n"
-    "                QuickAction.InsertKey(TextKeyData.AI_FRIENDLY),\n"
-    "                QuickAction.InsertKey(TextKeyData.AI_PROFESSIONAL),\n"
-    "                QuickAction.InsertKey(TextKeyData.AI_CASUAL),\n"
-    "                QuickAction.InsertKey(TextKeyData.AI_HUMOROUS),\n"
-    "                QuickAction.InsertKey(TextKeyData.AI_IRONIC),\n"
-    "                QuickAction.InsertKey(TextKeyData.AI_SHORT),\n"
-    "                QuickAction.InsertKey(TextKeyData.AI_SIMPLE),\n"
-    "                QuickAction.InsertKey(TextKeyData.AI_DIRECT),\n"
+    "                QuickAction.InsertKey(TextKeyData.AI_STYLE_MENU),\n"
     "                QuickAction.InsertKey(TextKeyData.AI_PROMPT),\n"
     "                QuickAction.InsertKey(TextKeyData.AI_SETTINGS),\n",
     "QuickActionArrangement defaults",
 )
 write(path, s)
 
-# Wire automatic correction and manual style actions into KeyboardManager.
+# Wire manual correction and styles into KeyboardManager.
 path = SRC / "kotlin/dev/patrickgold/florisboard/ime/keyboard/KeyboardManager.kt"
 s = read(path)
 s = replace_once(
@@ -253,7 +275,7 @@ s = replace_once(
     }
 ''',
     '''    private fun handleToggleAutocorrect() {
-        aiAssistant.toggleAutoCorrection()
+        runAiStyle(AiStyle.CORRECT)
     }
 
     private fun runAiStyle(style: AiStyle) {
@@ -265,7 +287,7 @@ s = replace_once(
         )
     }
 ''',
-    "KeyboardManager autocorrect implementation",
+    "KeyboardManager manual correction implementation",
 )
 s = replace_once(
     s,
@@ -277,6 +299,13 @@ s = replace_once(
     "            KeyCode.AI_CASUAL -> runAiStyle(AiStyle.CASUAL)\n"
     "            KeyCode.AI_HUMOROUS -> runAiStyle(AiStyle.HUMOROUS)\n"
     "            KeyCode.AI_IRONIC -> runAiStyle(AiStyle.IRONIC)\n"
+    "            KeyCode.AI_FLIRTY -> runAiStyle(AiStyle.FLIRTY)\n"
+    "            KeyCode.AI_SUGGESTIVE -> runAiStyle(AiStyle.SUGGESTIVE)\n"
+    "            KeyCode.AI_ELEGANT -> runAiStyle(AiStyle.ELEGANT)\n"
+    "            KeyCode.AI_BUSINESS -> runAiStyle(AiStyle.BUSINESS)\n"
+    "            KeyCode.AI_PERSONAL -> runAiStyle(AiStyle.PERSONAL)\n"
+    "            KeyCode.AI_DU -> runAiStyle(AiStyle.DU)\n"
+    "            KeyCode.AI_SIE -> runAiStyle(AiStyle.SIE)\n"
     "            KeyCode.AI_SHORT -> runAiStyle(AiStyle.SHORT)\n"
     "            KeyCode.AI_SIMPLE -> runAiStyle(AiStyle.SIMPLE)\n"
     "            KeyCode.AI_DIRECT -> runAiStyle(AiStyle.DIRECT)\n"
@@ -310,4 +339,4 @@ s = replace_once(
 write(path, s)
 
 print("AI patch applied to FlorisBoard v0.5.2")
-print("Features: delayed contextual proofreading, voice correction, 10 rewrite/prompt styles, dynamic AI providers")
+print("Features: manual contextual correction, style dropdown, Prompt+, dynamic providers")
