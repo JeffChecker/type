@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="quick_action__ai_correct">KI korrigieren</string>
-    <string name="quick_action__ai_correct__tooltip">Aktuellen Absatz oder markierten Text mit KI korrigieren</string>
+    <string name="quick_action__ai_correct__tooltip">Aktuellen Absatz oder markierten Text bewusst mit KI korrigieren</string>
+    <string name="quick_action__ai_style_menu">Stil wählen</string>
+    <string name="quick_action__ai_style_menu__tooltip">Schreibstil für den aktuellen Absatz oder markierten Text auswählen</string>
     <string name="quick_action__ai_friendly">Freundlich</string>
     <string name="quick_action__ai_friendly__tooltip">Absatz oder markierten Text freundlich umformulieren</string>
     <string name="quick_action__ai_professional">Professionell</string>
