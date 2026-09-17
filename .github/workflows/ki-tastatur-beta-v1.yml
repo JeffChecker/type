@@ -9,6 +9,9 @@ on:
     paths:
       - 'florisboard-de/**'
       - 'florisboard-ai/**'
+      - 'assets/**'
+      - 'README.md'
+      - 'KI-Tastatur-RELEASE.md'
       - '.github/workflows/ki-tastatur-beta-v1.yml'
   workflow_dispatch:
 
@@ -43,7 +46,7 @@ jobs:
       - name: Apply complete German localization
         run: python3 controller/florisboard-de/make_german.py
 
-      - name: Apply KI Tastatur branding
+      - name: Apply KI Tastatur branding and icon
         run: python3 controller/florisboard-ai/apply_branding.py
 
       - name: Add manual AI correction, style menu and Prompt+
@@ -119,11 +122,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="ki-tastatur-beta-v1"
-          NOTES="Erste Beta der KI Tastatur. Basierend auf FlorisBoard (Apache 2.0). KI Korrektur startet nur auf Tastendruck und berücksichtigt Sinnzusammenhang, Diktatfehler und Zeichensetzung. Eigene Satzendzeichen bleiben erhalten. Stil Auswahl mit Sarkastisch, Flirtend, Verführerisch/Zweideutig, Stilvoll, Geschäftlich, Professionell, Freundlich, Persönlich, Du-Form, Sie-Form, Locker, Humorvoll, Direkt, Kurz und Einfache Sprache. Prompt+ verbessert Rohtexte zu strukturierten KI Prompts. Übersetzen läuft lokal über ML Kit. Unterstützt OpenAI, Gemini, Claude und Groq mit dynamischer Modellwahl. Texte werden natürlich und menschlich formuliert; typische KI Floskeln sowie unnötige Gedankenstriche und Bindestrich Konstruktionen werden vermieden."
+          NOTES_FILE="controller/KI-Tastatur-RELEASE.md"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "KI Tastatur Beta v1" --notes "$NOTES" --prerelease
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "KI Tastatur Beta v1" --notes-file "$NOTES_FILE" --prerelease
           else
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "KI Tastatur Beta v1" --notes "$NOTES" --prerelease
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "KI Tastatur Beta v1" --notes-file "$NOTES_FILE" --prerelease
           fi
           gh release upload "$TAG" KI-Tastatur-Beta-v1.apk --repo "$GITHUB_REPOSITORY" --clobber
 
