@@ -28,11 +28,12 @@ patch(
     "    implementation(\"com.google.mlkit:translate:17.0.3\")\n",
 )
 
+# -320 is Prompt+, therefore translation gets its own unique code -329.
 patch(
     SRC / "kotlin/dev/patrickgold/florisboard/ime/text/key/KeyCode.kt",
     "    const val AI_SETTINGS =                 -319\n",
     "    const val AI_SETTINGS =                 -319\n"
-    "    const val AI_TRANSLATE =                -320\n",
+    "    const val AI_TRANSLATE =                -329\n",
 )
 
 path = SRC / "kotlin/dev/patrickgold/florisboard/ime/text/keyboard/TextKeyData.kt"
@@ -96,4 +97,4 @@ patch(
     "            )\n",
 )
 
-print("On-device translation integrated")
+print("On-device translation integrated with unique key code")
