@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="quick_action__ai_correct">KI korrigieren</string>
-    <string name="quick_action__ai_correct__tooltip">Aktuellen Satz oder markierten Text mit KI korrigieren</string>
+    <string name="quick_action__ai_correct__tooltip">Aktuellen Absatz oder markierten Text mit KI korrigieren</string>
     <string name="quick_action__ai_friendly">Freundlich</string>
-    <string name="quick_action__ai_friendly__tooltip">Text freundlich umformulieren</string>
+    <string name="quick_action__ai_friendly__tooltip">Absatz oder markierten Text freundlich umformulieren</string>
     <string name="quick_action__ai_professional">Professionell</string>
-    <string name="quick_action__ai_professional__tooltip">Text professionell umformulieren</string>
+    <string name="quick_action__ai_professional__tooltip">Absatz oder markierten Text professionell umformulieren</string>
     <string name="quick_action__ai_casual">Locker</string>
-    <string name="quick_action__ai_casual__tooltip">Text locker und natürlich umformulieren</string>
+    <string name="quick_action__ai_casual__tooltip">Absatz oder markierten Text locker und natürlich umformulieren</string>
     <string name="quick_action__ai_humorous">Humorvoll</string>
-    <string name="quick_action__ai_humorous__tooltip">Text humorvoll umformulieren</string>
-    <string name="quick_action__ai_ironic">Ironisch</string>
-    <string name="quick_action__ai_ironic__tooltip">Text leicht ironisch umformulieren</string>
+    <string name="quick_action__ai_humorous__tooltip">Absatz oder markierten Text deutlich humorvoll umformulieren</string>
+    <string name="quick_action__ai_ironic">Sarkastisch</string>
+    <string name="quick_action__ai_ironic__tooltip">Absatz oder markierten Text sarkastisch und ironisch umformulieren</string>
     <string name="quick_action__ai_short">Kurz</string>
-    <string name="quick_action__ai_short__tooltip">Text kürzer formulieren</string>
+    <string name="quick_action__ai_short__tooltip">Text kürzer formulieren und Kernaussage erhalten</string>
     <string name="quick_action__ai_simple">Einfach</string>
     <string name="quick_action__ai_simple__tooltip">Text in einfacher Sprache formulieren</string>
     <string name="quick_action__ai_direct">Direkt</string>
