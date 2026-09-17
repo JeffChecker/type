@@ -1,91 +1,82 @@
 <p align="center">
-  <img src="assets/ki-tastatur-logo.svg" width="180" alt="KI Tastatur Logo">
+  <img src="assets/ki-tastatur-logo.svg" width="190" alt="KI Tastatur Logo">
 </p>
 
-# KI Tastatur
+<h1 align="center">KI Tastatur</h1>
+<p align="center"><strong>Schreiben. Verstehen. Verbessern. Direkt auf der Tastatur.</strong></p>
 
-**Eine Android Tastatur mit integrierter KI für Korrektur, Stil, Prompts und Übersetzung.**
+<p align="center">
+  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v1"><strong>Beta v1 herunterladen</strong></a>
+</p>
 
-KI Tastatur verbindet eine vollwertige Android Tastatur mit einem direkten Schreibassistenten. Texte werden nicht automatisch im Hintergrund verändert. Du entscheidest selbst, wann die KI eingreift.
+## Deine Tastatur kann jetzt mehr als tippen
 
-Aktueller Stand: **Beta v1**
+KI Tastatur verbindet eine vollwertige Android Tastatur mit einem intelligenten Schreibassistenten. Du schreibst wie gewohnt und entscheidest selbst, wann die KI helfen soll.
 
-[Beta v1 herunterladen](https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v1)
+Ein Tastendruck genügt, um einen Text zu korrigieren, verständlicher zu machen, den Stil zu ändern, einen Prompt zu verbessern oder Inhalte zu übersetzen. Dabei soll der Text nicht künstlich oder nach KI klingen, sondern natürlich und menschlich.
 
-## Was KI Tastatur kann
+## Die wichtigsten Funktionen
 
-### KI Korrektur auf Knopfdruck
+### KI Korrektur
 
-Mit **KI korrigieren** wird der markierte Text oder der aktuelle Absatz geprüft. Die KI berücksichtigt nicht nur Rechtschreibung und Grammatik, sondern auch den Sinn des Textes, typische Diktierfehler und den Zusammenhang.
+Mit **KI korrigieren** wird der markierte Text oder der aktuelle Absatz geprüft. Dabei geht es nicht nur um Rechtschreibung und Grammatik. Die KI berücksichtigt auch Zusammenhang, Sinn, typische Diktierfehler und missverständliche Formulierungen.
 
-Eigene Satzzeichen wie `!`, `?`, `?!`, `!!` oder `…` sollen erhalten bleiben. Es gibt keine zeitgesteuerte automatische Korrektur mehr.
+Die Korrektur startet ausschließlich auf Knopfdruck. Es gibt keine automatische Änderung während du noch schreibst oder nachdenkst. Eigene Satzzeichen wie `!`, `?`, `?!`, `!!` und `…` sollen erhalten bleiben.
 
-### Schreibstil ändern
+### Stil auf Knopfdruck
 
-Über die Taste **Stil** kann ein vorhandener Text gezielt umgeschrieben werden. Zur Auswahl gehören unter anderem:
+Über **Stil** kannst du denselben Inhalt passend zur Situation umformulieren. Zum Beispiel:
 
-- Freundlich
-- Professionell
-- Geschäftlich
-- Locker
-- Stilvoll
-- Humorvoll
-- Sarkastisch
-- Flirtend
-- Verführerisch oder zweideutig
-- Direkt
-- Kurz
-- Einfache Sprache
-- Du Form
-- Sie Form
+**Freundlich · Professionell · Geschäftlich · Stilvoll · Locker · Humorvoll · Sarkastisch · Flirtend · Verführerisch · Direkt · Kurz · Einfache Sprache · Du Form · Sie Form**
 
-Die Stilprompts sind darauf ausgelegt, natürlich zu klingen. Typische KI Floskeln, unnötige Gedankenstriche und künstlich überstrukturierte Formulierungen werden vermieden.
+Die Stilprompts sind bewusst auf natürliche Sprache ausgelegt. Unnötige KI Floskeln, künstlich glatte Formulierungen und überflüssige Gedankenstriche werden vermieden.
 
-### Prompt verbessern
+### Prompt+
 
-Mit **Prompt+** wird aus einem groben Text ein klarer, verständlicher Prompt. Ziel, Kontext, gewünschtes Ergebnis und wichtige Vorgaben werden strukturiert, ohne zusätzliche Fakten zu erfinden.
+Aus einer groben Idee wird ein klarer Prompt. **Prompt+** erkennt Ziel, Kontext, gewünschtes Ergebnis und wichtige Vorgaben und strukturiert den Text so, dass KI Systeme ihn besser verstehen können, ohne neue Fakten zu erfinden.
 
 ### Übersetzen
 
-Die Übersetzungsfunktion läuft lokal über **Google ML Kit**. Die Ausgangssprache wird automatisch erkannt. Als Zielsprache wird die aktuell aktive Tastatursprache verwendet.
+Texte können direkt aus der Tastatur übersetzt werden. Die Ausgangssprache wird automatisch erkannt. Als Ziel wird die aktuell aktive Tastatursprache verwendet.
 
-Für die lokale Übersetzung ist kein Cloud API Schlüssel erforderlich.
+Die Übersetzung läuft lokal über **Google ML Kit** und benötigt dafür keinen Cloud API Schlüssel.
 
-### Mehrere KI Anbieter
+### Freie Wahl des KI Anbieters
 
-KI Tastatur unterstützt:
+KI Tastatur unterstützt derzeit:
 
-- OpenAI
-- Google Gemini
-- Anthropic Claude
-- Groq
+- **OpenAI**
+- **Google Gemini**
+- **Anthropic Claude**
+- **Groq**
 
-Für jeden Anbieter wird der eigene API Schlüssel getrennt gespeichert. Die verfügbaren Modelle werden direkt beim jeweiligen Anbieter abgefragt. Du kannst ein Modell selbst auswählen oder die automatische Auswahl verwenden.
+Jeder Anbieter erhält seinen eigenen API Schlüssel. Die verfügbaren Modelle werden direkt über die jeweilige API geladen. Du kannst ein Modell selbst auswählen oder die automatische Auswahl nutzen.
+
+## Für Diktat genauso gedacht wie für Tippen
+
+Gerade Spracheingabe produziert häufig kleine Fehler, fehlende Satzzeichen oder falsche Wörter. KI Tastatur kann solche Texte nach dem Diktieren auf Knopfdruck als Ganzes prüfen und sinnvoll überarbeiten.
 
 ## Datenschutz
 
-Cloud KI wird nicht für Passwortfelder, sensible Eingabefelder oder den Inkognito Modus verwendet. Übersetzungen laufen lokal auf dem Gerät.
+Passwortfelder, sensible Eingaben und Inkognito Felder werden nicht an eine Cloud KI gesendet. Für Korrektur, Stil oder Prompt+ wird nur der Text an den Anbieter übertragen, den du selbst eingerichtet hast.
 
-Bei Korrektur, Stiländerung oder Prompt Verbesserung wird der dafür ausgewählte Text an den von dir eingerichteten KI Anbieter gesendet. Es werden keine API Schlüssel im Quellcode der App mitgeliefert.
+API Schlüssel werden nicht in der App mitgeliefert und nicht im öffentlichen Quellcode hinterlegt.
 
 ## Installation
 
-1. Lade die aktuelle APK aus den Releases herunter.
-2. Installiere **KI Tastatur** auf deinem Android Gerät.
-3. Aktiviere die Tastatur in den Android Einstellungen.
-4. Lege KI Tastatur als Eingabemethode fest.
-5. Öffne die Einstellungen der KI Tastatur.
-6. Wähle einen KI Anbieter aus und trage deinen API Schlüssel ein.
-7. Lade die verfügbaren Modelle und wähle ein Modell oder `auto`.
-8. Teste die Verbindung.
+1. Lade **KI Tastatur Beta v1** aus den GitHub Releases herunter.
+2. Installiere die APK.
+3. Aktiviere KI Tastatur in den Android Einstellungen.
+4. Lege sie als Eingabemethode fest.
+5. Öffne die KI Einstellungen.
+6. Wähle OpenAI, Gemini, Claude oder Groq.
+7. Trage deinen eigenen API Schlüssel ein.
+8. Lade die verfügbaren Modelle und wähle eines aus oder nutze `auto`.
+9. Teste die Verbindung.
 
-> Hinweis: Die App verwendet derzeit weiterhin die ursprüngliche interne Paketkennung der technischen Basis. Eine anders signierte Installation mit derselben Paketkennung kann deshalb nicht direkt überschrieben werden.
+> Beta v1 ist eine Testversion. Funktionen und Bedienung werden anhand der praktischen Nutzung weiter verbessert.
 
-## Beta Status
-
-Beta v1 ist eine Testversion. Funktionen und Bedienung werden auf Grundlage praktischer Nutzung weiter verbessert. Die Versionsreihe wird künftig als **Beta v1, Beta v2, Beta v3** usw. geführt.
-
-## Technische Basis und Lizenz
+## Technische Basis
 
 KI Tastatur basiert auf dem Open Source Projekt **FlorisBoard** und wird auf Grundlage der **Apache License 2.0** weiterentwickelt.
 
