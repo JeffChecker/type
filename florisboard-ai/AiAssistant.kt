@@ -37,8 +37,8 @@ class AiAssistant(private val context: Context) {
     }
 
     /**
-     * Die frühere automatische Zeitsteuerung ist absichtlich deaktiviert.
-     * Korrekturen werden nur noch durch eine bewusste Smartbar-Aktion gestartet.
+     * Bewusst leer: Es gibt keine zeitgesteuerte Autokorrektur mehr.
+     * Text wird nur nach Betätigung einer Smartbar-Aktion verändert.
      */
     fun onContentChanged(
         content: EditorContent,
@@ -46,7 +46,7 @@ class AiAssistant(private val context: Context) {
         incognito: Boolean,
         rawEditor: Boolean,
     ) {
-        // Kein Timer, keine automatische Änderung während der Nutzer noch schreibt.
+        // Kein Timer und keine automatische Änderung während des Schreibens.
     }
 
     fun runStyle(style: AiStyle, sensitiveField: Boolean, incognito: Boolean, rawEditor: Boolean) {
@@ -77,7 +77,7 @@ class AiAssistant(private val context: Context) {
         val statusText = when (style) {
             AiStyle.CORRECT -> "KI prüft Sinn, Sprache und Zeichensetzung …"
             AiStyle.PROMPT -> "KI verbessert den Prompt …"
-            else -> "KI versteht und bearbeitet den Text …"
+            else -> "KI setzt den gewählten Schreibstil um …"
         }
         toast(statusText)
 
@@ -135,9 +135,9 @@ class AiAssistant(private val context: Context) {
     }
 
     /**
-     * Bei manueller Korrektur bleibt die vom Nutzer gesetzte Satzendabsicht erhalten.
-     * Ein vorhandenes !, ?, ?!, !!, … usw. wird exakt beibehalten. Hat der Nutzer noch
-     * kein Satzzeichen gesetzt, fügt die KI am Ende keines ungefragt hinzu.
+     * Bewahrt die vom Nutzer gesetzte Satzendabsicht.
+     * !, ?, ?!, !!, … usw. bleiben exakt erhalten. Hat der Nutzer noch kein
+     * Satzzeichen gesetzt, fügt die KI am Ende keines ungefragt hinzu.
      */
     private fun preserveUserEnding(original: String, corrected: String): String {
         val punctuation = charArrayOf('.', '!', '?', '…')
@@ -183,6 +183,13 @@ enum class AiStyle(val instruction: String) {
     CASUAL(" Erfasse den vollständigen Inhalt und formuliere ihn deutlich lockerer, natürlicher und alltagstauglich. Die Kernaussage muss vollständig erhalten bleiben."),
     HUMOROUS(" Erfasse den vollständigen Inhalt und formuliere ihn erkennbar humorvoll, pointiert und sympathisch. Der Witz darf deutlicher sein, aber Fakten und Kernaussage dürfen nicht erfunden oder verfälscht werden."),
     IRONIC(" Erfasse den vollständigen Inhalt und formuliere ihn klar erkennbar sarkastisch und ironisch, pointiert und trocken, aber nicht beleidigend. Die eigentliche Aussage und alle Fakten müssen erhalten bleiben."),
+    FLIRTY(" Erfasse den vollständigen Inhalt und formuliere ihn charmant, spielerisch und eindeutig flirtend. Die Aussage soll selbstbewusst und sympathisch wirken, ohne Druck, Manipulation oder explizite sexuelle Beschreibungen."),
+    SUGGESTIVE(" Erfasse den vollständigen Inhalt und formuliere ihn für erwachsene, einvernehmliche Kommunikation verführerisch, zweideutig und mit klar erkennbarem sexuellem Interesse, aber nicht grafisch oder pornografisch. Kein Druck, keine Drohung, keine Manipulation und keine Annahme von Zustimmung."),
+    ELEGANT(" Erfasse den vollständigen Inhalt und formuliere ihn stilvoll, elegant, sprachlich hochwertig und natürlich. Nicht gestelzt und keine Fakten verändern."),
+    BUSINESS(" Erfasse den vollständigen Inhalt und formuliere ihn geschäftlich, verbindlich, klar und professionell. Wichtige Termine, Zahlen, Namen, Forderungen und Handlungsaufträge müssen vollständig erhalten bleiben."),
+    PERSONAL(" Erfasse den vollständigen Inhalt und formuliere ihn persönlich, warm und authentisch, als käme er direkt vom Absender. Keine erfundenen persönlichen Details hinzufügen."),
+    DU(" Behalte den vollständigen Inhalt bei und formuliere konsequent in direkter Du-Anrede. Passe Pronomen, Anrede und Satzbau natürlich an, ohne Fakten zu verändern."),
+    SIE(" Behalte den vollständigen Inhalt bei und formuliere konsequent in höflicher Sie-Anrede. Passe Pronomen, Anrede und Satzbau natürlich an, ohne Fakten zu verändern."),
     SHORT(" Erfasse zuerst die Kernaussage und kürze den Text deutlich. Alle wichtigen Informationen, Namen, Zahlen und Handlungsaufforderungen müssen erhalten bleiben."),
     SIMPLE(" Erfasse den vollständigen Inhalt und formuliere ihn in sehr einfacher, leicht verständlicher Sprache mit kurzen, klaren Sätzen. Keine wichtige Information weglassen."),
     DIRECT(" Erfasse die Kernaussage und formuliere sie deutlich direkter, klarer und ohne unnötige Füllwörter. Fakten und Absicht vollständig erhalten und weiterhin angemessen höflich bleiben."),
