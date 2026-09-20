@@ -58,7 +58,7 @@ Gerade Spracheingabe produziert häufig kleine Fehler, fehlende Satzzeichen oder
 
 ## Datenschutz
 
-Passwortfelder, sensible Eingaben und Inkognito Felder werden nicht an eine Cloud KI gesendet. Für Korrektur, Stil oder Prompt+ wird nur der Text an den Anbieter übertragen, den du selbst eingerichtet hast.
+Passwortfelder, sensible Eingaben und Inkognito Felder werden nicht an eine Cloud KI gesendet. Für Korrektur, Stil oder Prompt+ wird nur der Text an den Anbieter übertragen, den du selbst eingerichtet hast. Cloud Übersetzungen werden nur im Google Cloud Modus an Google Translate gesendet. Im Inkognito Modus bleibt die Übersetzung lokal.
 
 API Schlüssel werden nicht in der App mitgeliefert und nicht im öffentlichen Quellcode hinterlegt.
 
