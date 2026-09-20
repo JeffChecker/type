@@ -281,7 +281,7 @@ class AiSettingsActivity : ComponentActivity() {
 
             Spacer(Modifier.height(8.dp))
             Text("Übersetzen", style = MaterialTheme.typography.titleLarge)
-            Text("Die Übersetzung läuft lokal mit ML Kit. Die Ausgangssprache wird automatisch erkannt. Übersetzt wird in die aktuell aktive FlorisBoard Tastatursprache. Sprachmodelle werden bei Bedarf einmalig geladen.")
+            Text("Die Übersetzung läuft lokal mit ML Kit. Die Ausgangssprache wird automatisch erkannt. Übersetzt wird in die aktuell aktive Tastatursprache. Sprachmodelle werden bei Bedarf einmalig geladen.")
 
             Text("Datenschutz", style = MaterialTheme.typography.titleLarge)
             Text("Cloud-KI: Nur der aktuelle Absatz oder markierte Text wird per HTTPS an den ausgewählten Anbieter gesendet, und nur nachdem du eine KI Taste drückst. Übersetzen läuft nach dem Modelldownload lokal auf dem Gerät.")
