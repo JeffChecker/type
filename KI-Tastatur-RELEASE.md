@@ -1,4 +1,4 @@
-# KI Tastatur Beta v3
+# KI Tastatur Beta v4
 
 **Die Android Tastatur mit KI direkt beim Schreiben.**
 
@@ -10,7 +10,7 @@ Kein Kopieren in andere Apps. Kein automatisches Eingreifen während du noch sch
 
 ### Texte verstehen statt nur Rechtschreibung prüfen
 
-Mit **KI korrigieren** wird nicht nur auf Rechtschreibung und Grammatik geschaut. Beta v3 verwendet eine robuste Fallback Logik: markierter Text, aktueller Absatz, aktueller Satz oder ein Textblock vor dem Cursor. Dadurch funktioniert die Korrektur zuverlässiger in unterschiedlichen Apps und Eingabefeldern.
+Mit **KI korrigieren** wird nicht nur auf Rechtschreibung und Grammatik geschaut. Beta v4 verwendet eine robuste Fallback Logik: markierter Text, aktueller Absatz, aktueller Satz oder ein Textblock vor dem Cursor. Dadurch funktioniert die Korrektur zuverlässiger in unterschiedlichen Apps und Eingabefeldern.
 
 Die Korrektur startet ausschließlich auf Knopfdruck. Eigene Satzzeichen wie `!`, `?`, `?!`, `!!` oder `…` sollen erhalten bleiben.
 
@@ -28,9 +28,9 @@ Du hast eine grobe Idee, aber noch keinen guten Prompt? **Prompt+** macht daraus
 
 ### Übersetzen direkt auf dem Gerät
 
-Beta v3 führt eine **Hybrid Übersetzung** ein. Mit einem eigenen Google Cloud Translation API Schlüssel wird die Cloud Translation API für höhere Qualität und eine deutlich größere Sprachauswahl verwendet. Die Ausgangssprache wird automatisch erkannt. Die Zielsprache kann der aktiven Tastatursprache folgen oder aus der aktuellen Google Sprachliste gewählt werden.
+Beta v4 übersetzt standardmäßig mit dem **bereits eingerichteten KI Anbieter**. OpenAI, Gemini, Claude oder Groq verwenden denselben API Schlüssel und dasselbe ausgewählte Modell wie die übrigen KI Funktionen. Ein zusätzlicher Übersetzungs Schlüssel ist nicht erforderlich. Die Ausgangssprache wird automatisch erkannt und der Text wird mit einem strengen Übersetzungs Prompt sinngenau, vollständig und ohne zusätzliche Inhalte übertragen.
 
-Ohne Cloud Schlüssel, bei Cloud Fehlern im Automatikmodus oder im Inkognito Modus wird lokal über **Google ML Kit** übersetzt.
+Die Zielsprache kann der aktiven Tastatursprache folgen oder aus einer großen Sprachliste gewählt werden. Optional kann Google Cloud Translation als Fallback hinterlegt werden. Im Inkognito Modus wird ausschließlich lokal über **Google ML Kit** übersetzt.
 
 ### Du entscheidest, welche KI du nutzt
 
@@ -55,7 +55,7 @@ Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil, Pr
 
 ## Installation
 
-1. **KI-Tastatur-Beta-v3.apk** herunterladen.
+1. **KI-Tastatur-Beta-v4.apk** herunterladen.
 2. APK installieren.
 3. KI Tastatur in den Android Einstellungen aktivieren.
 4. Als Eingabemethode auswählen.
@@ -64,9 +64,9 @@ Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil, Pr
 7. Modelle laden und eines auswählen oder `auto` verwenden.
 8. Verbindung testen.
 
-## Beta v3
+## Beta v4
 
-Diese Beta konzentriert sich auf deutlich bessere Übersetzungen, mehr Sprachen, eine dynamisch von Google geladene Sprachliste und einen Offline Fallback. Weitere Testversionen folgen fortlaufend als **Beta v4, Beta v5** usw.
+Diese Beta konzentriert sich auf kontextbezogene KI Übersetzungen mit dem bereits vorhandenen API Schlüssel, eine große Sprachauswahl, optionalen Google Fallback und lokale Offline Übersetzung. Weitere Testversionen folgen fortlaufend als **Beta v5, Beta v6** usw.
 
 ## Open Source Grundlage
 
