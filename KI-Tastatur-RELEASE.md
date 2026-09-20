@@ -1,4 +1,4 @@
-# KI Tastatur Beta v2
+# KI Tastatur Beta v3
 
 **Die Android Tastatur mit KI direkt beim Schreiben.**
 
@@ -10,7 +10,7 @@ Kein Kopieren in andere Apps. Kein automatisches Eingreifen während du noch sch
 
 ### Texte verstehen statt nur Rechtschreibung prüfen
 
-Mit **KI korrigieren** wird nicht nur auf Rechtschreibung und Grammatik geschaut. Beta v2 verwendet eine robuste Fallback Logik: markierter Text, aktueller Absatz, aktueller Satz oder ein Textblock vor dem Cursor. Dadurch funktioniert die Korrektur zuverlässiger in unterschiedlichen Apps und Eingabefeldern.
+Mit **KI korrigieren** wird nicht nur auf Rechtschreibung und Grammatik geschaut. Beta v3 verwendet eine robuste Fallback Logik: markierter Text, aktueller Absatz, aktueller Satz oder ein Textblock vor dem Cursor. Dadurch funktioniert die Korrektur zuverlässiger in unterschiedlichen Apps und Eingabefeldern.
 
 Die Korrektur startet ausschließlich auf Knopfdruck. Eigene Satzzeichen wie `!`, `?`, `?!`, `!!` oder `…` sollen erhalten bleiben.
 
@@ -28,9 +28,9 @@ Du hast eine grobe Idee, aber noch keinen guten Prompt? **Prompt+** macht daraus
 
 ### Übersetzen direkt auf dem Gerät
 
-Die integrierte Übersetzung läuft lokal über **Google ML Kit**. Die Ausgangssprache wird automatisch erkannt. Als Ziel dient die aktuell aktive Tastatursprache.
+Beta v3 führt eine **Hybrid Übersetzung** ein. Mit einem eigenen Google Cloud Translation API Schlüssel wird die Cloud Translation API für höhere Qualität und eine deutlich größere Sprachauswahl verwendet. Die Ausgangssprache wird automatisch erkannt. Die Zielsprache kann der aktiven Tastatursprache folgen oder aus der aktuellen Google Sprachliste gewählt werden.
 
-Für die Übersetzung ist kein Cloud API Schlüssel notwendig.
+Ohne Cloud Schlüssel, bei Cloud Fehlern im Automatikmodus oder im Inkognito Modus wird lokal über **Google ML Kit** übersetzt.
 
 ### Du entscheidest, welche KI du nutzt
 
@@ -55,7 +55,7 @@ Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil ode
 
 ## Installation
 
-1. **KI-Tastatur-Beta-v2.apk** herunterladen.
+1. **KI-Tastatur-Beta-v3.apk** herunterladen.
 2. APK installieren.
 3. KI Tastatur in den Android Einstellungen aktivieren.
 4. Als Eingabemethode auswählen.
@@ -64,9 +64,9 @@ Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil ode
 7. Modelle laden und eines auswählen oder `auto` verwenden.
 8. Verbindung testen.
 
-## Beta v2
+## Beta v3
 
-Diese Beta konzentriert sich auf zuverlässigere KI Korrektur, eine direkt sichtbare Modellkonfiguration und deutlich präzisere Stilprompts. Weitere Testversionen folgen fortlaufend als **Beta v3, Beta v4** usw.
+Diese Beta konzentriert sich auf deutlich bessere Übersetzungen, mehr Sprachen, eine dynamisch von Google geladene Sprachliste und einen Offline Fallback. Weitere Testversionen folgen fortlaufend als **Beta v4, Beta v5** usw.
 
 ## Open Source Grundlage
 
