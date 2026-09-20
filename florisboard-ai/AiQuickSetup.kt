@@ -220,5 +220,7 @@ fun AiQuickSetupPanel(
         ) { Text("API Schlüssel beim Anbieter öffnen") }
 
         if (status.isNotBlank()) Text(status, style = MaterialTheme.typography.bodyLarge)
+
+        TranslationQuickSetupPanel(compact = compact)
     }
 }
