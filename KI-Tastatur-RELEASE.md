@@ -51,7 +51,7 @@ KI Tastatur ist nicht nur für klassische Texteingabe gedacht. Auch diktierte Te
 
 Passwortfelder, sensible Eingabefelder und Inkognito Felder werden nicht an eine Cloud KI gesendet.
 
-Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil oder Prompt+ tippst. Übersetzungen laufen lokal auf dem Gerät.
+Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil, Prompt+ oder eine aktivierte Cloud Übersetzung tippst. Google Cloud Übersetzungen werden an Google Translate gesendet. Im Inkognito Modus verwendet die App ausschließlich die lokale ML Kit Übersetzung.
 
 ## Installation
 
