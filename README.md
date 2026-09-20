@@ -6,7 +6,7 @@
 <p align="center"><strong>Schreiben. Verstehen. Verbessern. Direkt auf der Tastatur.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v1"><strong>Beta v1 herunterladen</strong></a>
+  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v2"><strong>Beta v2 herunterladen</strong></a>
 </p>
 
 ## Deine Tastatur kann jetzt mehr als tippen
@@ -19,7 +19,7 @@ Ein Tastendruck genügt, um einen Text zu korrigieren, verständlicher zu machen
 
 ### KI Korrektur
 
-Mit **KI korrigieren** wird der markierte Text oder der aktuelle Absatz geprüft. Dabei geht es nicht nur um Rechtschreibung und Grammatik. Die KI berücksichtigt auch Zusammenhang, Sinn, typische Diktierfehler und missverständliche Formulierungen.
+Mit **KI korrigieren** wird zuerst markierter Text verwendet. Ohne Markierung versucht die Tastatur den aktuellen Absatz zu erfassen. Falls ein Textfeld Absätze nicht sauber liefert, nutzt sie automatisch den aktuellen Satz oder den Textblock vor dem Cursor. Dadurch funktioniert die Korrektur auch in mehr Apps zuverlässig. Die KI berücksichtigt Zusammenhang, Sinn, typische Diktierfehler und missverständliche Formulierungen.
 
 Die Korrektur startet ausschließlich auf Knopfdruck. Es gibt keine automatische Änderung während du noch schreibst oder nachdenkst. Eigene Satzzeichen wie `!`, `?`, `?!`, `!!` und `…` sollen erhalten bleiben.
 
@@ -50,7 +50,7 @@ KI Tastatur unterstützt derzeit:
 - **Anthropic Claude**
 - **Groq**
 
-Jeder Anbieter erhält seinen eigenen API Schlüssel. Die verfügbaren Modelle werden direkt über die jeweilige API geladen. Du kannst ein Modell selbst auswählen oder die automatische Auswahl nutzen.
+Jeder Anbieter erhält seinen eigenen API Schlüssel. Die Modellkonfiguration ist direkt auf der Hauptseite der App sichtbar. Dort kannst du Anbieter, API Schlüssel und Modell einstellen, aktuelle Modelle laden und die Verbindung testen. Die verfügbaren Modelle werden direkt über die jeweilige API geladen.
 
 ## Für Diktat genauso gedacht wie für Tippen
 
@@ -64,7 +64,7 @@ API Schlüssel werden nicht in der App mitgeliefert und nicht im öffentlichen Q
 
 ## Installation
 
-1. Lade **KI Tastatur Beta v1** aus den GitHub Releases herunter.
+1. Lade **KI Tastatur Beta v2** aus den GitHub Releases herunter.
 2. Installiere die APK.
 3. Aktiviere KI Tastatur in den Android Einstellungen.
 4. Lege sie als Eingabemethode fest.
@@ -74,7 +74,7 @@ API Schlüssel werden nicht in der App mitgeliefert und nicht im öffentlichen Q
 8. Lade die verfügbaren Modelle und wähle eines aus oder nutze `auto`.
 9. Teste die Verbindung.
 
-> Beta v1 ist eine Testversion. Funktionen und Bedienung werden anhand der praktischen Nutzung weiter verbessert.
+> Beta v2 ist eine Testversion. Die Korrekturlogik, Modellkonfiguration und Stilprompts wurden gegenüber Beta v1 deutlich überarbeitet.
 
 ## Technische Basis
 
