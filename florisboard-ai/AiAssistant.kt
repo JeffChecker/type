@@ -64,7 +64,7 @@ class AiAssistant(private val context: Context) {
             return
         }
 
-        val target = selectedOrCurrentParagraphTarget(editorInstance.activeContent)
+        val target = selectedOrBestTarget(editorInstance.activeContent)
         if (target == null || target.text.isBlank()) {
             toast("Kein Text zum Bearbeiten gefunden")
             return
@@ -106,27 +106,94 @@ class AiAssistant(private val context: Context) {
 
     private data class Target(val start: Int, val end: Int, val text: String)
 
-    private fun selectedOrCurrentParagraphTarget(content: EditorContent): Target? {
+    private fun selectedOrBestTarget(content: EditorContent): Target? {
         if (!content.localSelection.isValid || content.offset < 0) return null
-        if (content.selectedText.isNotEmpty()) {
-            return Target(
-                start = content.offset + content.localSelection.start,
-                end = content.offset + content.localSelection.end,
-                text = content.selectedText,
-            )
+
+        val localStart = minOf(content.localSelection.start, content.localSelection.end)
+            .coerceIn(0, content.text.length)
+        val localEnd = maxOf(content.localSelection.start, content.localSelection.end)
+            .coerceIn(0, content.text.length)
+
+        if (localEnd > localStart) {
+            val selected = content.text.substring(localStart, localEnd)
+            if (selected.isNotBlank()) {
+                return Target(
+                    start = content.offset + localStart,
+                    end = content.offset + localEnd,
+                    text = selected,
+                )
+            }
         }
-        return currentParagraphTarget(content)
+
+        // 1. Bevorzugt den ganzen aktuellen Absatz, damit die KI den Sinn versteht.
+        val paragraph = currentParagraphTarget(content)
+        if (paragraph != null && paragraph.text.length <= 2_500) return paragraph
+
+        // 2. Fallback für sehr lange oder ungewöhnlich gelieferte Editor-Inhalte.
+        currentSentenceTarget(content)?.let {
+            if (it.text.isNotBlank() && it.text.length <= 2_500) return it
+        }
+
+        // 3. Letzter Fallback: sinnvoller Textblock direkt vor dem Cursor.
+        return textBeforeCursorTarget(content) ?: paragraph
     }
 
     private fun currentParagraphTarget(content: EditorContent): Target? {
         if (!content.localSelection.isValid || content.offset < 0) return null
         val cursor = content.localSelection.end.coerceIn(0, content.text.length)
-        var start = content.text.lastIndexOf('\n', (cursor - 1).coerceAtLeast(0)) + 1
+        var start = if (cursor > 0) content.text.lastIndexOf('\n', cursor - 1) + 1 else 0
         var end = content.text.indexOf('\n', cursor)
         if (end < 0) end = content.text.length
         while (start < end && content.text[start].isWhitespace()) start++
         while (end > start && content.text[end - 1].isWhitespace()) end--
         if (start >= end) return null
+        return Target(
+            start = content.offset + start,
+            end = content.offset + end,
+            text = content.text.substring(start, end),
+        )
+    }
+
+    private fun currentSentenceTarget(content: EditorContent): Target? {
+        if (!content.localSelection.isValid || content.offset < 0 || content.text.isEmpty()) return null
+        val text = content.text
+        val cursor = content.localSelection.end.coerceIn(0, text.length)
+        val punctuation = charArrayOf('.', '!', '?', '…')
+
+        var scan = (cursor - 1).coerceAtLeast(0)
+        while (scan >= 0 && text[scan].isWhitespace()) scan--
+        while (scan >= 0 && text[scan] in punctuation) scan--
+        while (scan >= 0 && text[scan] !in punctuation && text[scan] != '\n') scan--
+        var start = scan + 1
+
+        var end = cursor
+        while (end < text.length && text[end] !in punctuation && text[end] != '\n') end++
+        while (end < text.length && text[end] in punctuation) end++
+
+        while (start < end && text[start].isWhitespace()) start++
+        while (end > start && text[end - 1].isWhitespace()) end--
+        if (start >= end) return null
+
+        return Target(
+            start = content.offset + start,
+            end = content.offset + end,
+            text = text.substring(start, end),
+        )
+    }
+
+    private fun textBeforeCursorTarget(content: EditorContent): Target? {
+        if (!content.localSelection.isValid || content.offset < 0) return null
+        val cursor = content.localSelection.end.coerceIn(0, content.text.length)
+        if (cursor <= 0) return null
+
+        var start = (cursor - 1_500).coerceAtLeast(0)
+        val lastBreak = content.text.lastIndexOf('\n', (cursor - 1).coerceAtLeast(0))
+        if (lastBreak >= start) start = lastBreak + 1
+        var end = cursor
+        while (start < end && content.text[start].isWhitespace()) start++
+        while (end > start && content.text[end - 1].isWhitespace()) end--
+        if (start >= end) return null
+
         return Target(
             start = content.offset + start,
             end = content.offset + end,
@@ -158,14 +225,58 @@ class AiAssistant(private val context: Context) {
     private suspend fun applyIfStillCurrent(target: Target, replacement: String) {
         withContext(Dispatchers.Main) {
             val current = editorInstance.activeContent
-            if (current.offset < 0) return@withContext
-            val localStart = target.start - current.offset
-            val localEnd = target.end - current.offset
-            if (localStart < 0 || localEnd > current.text.length || localStart >= localEnd) return@withContext
-            if (current.text.substring(localStart, localEnd) != target.text) return@withContext
-            if (!editorInstance.setSelection(target.start, target.end)) return@withContext
+            if (current.offset < 0) {
+                toast("Textfeld ist nicht mehr verfügbar")
+                return@withContext
+            }
+
+            val expectedStart = target.start - current.offset
+            val expectedEnd = target.end - current.offset
+
+            var localStart = expectedStart
+            var localEnd = expectedEnd
+            val exactRangeStillMatches =
+                localStart >= 0 && localEnd <= current.text.length && localStart < localEnd &&
+                    current.text.substring(localStart, localEnd) == target.text
+
+            if (!exactRangeStillMatches) {
+                val hits = mutableListOf<Int>()
+                var from = 0
+                while (from <= current.text.length - target.text.length) {
+                    val hit = current.text.indexOf(target.text, from)
+                    if (hit < 0) break
+                    hits += hit
+                    from = hit + 1
+                }
+
+                val relocated = when {
+                    hits.size == 1 -> hits.first()
+                    hits.isNotEmpty() -> hits.minByOrNull { kotlin.math.abs(it - expectedStart) }
+                    else -> null
+                }
+
+                if (relocated == null ||
+                    (hits.size > 1 && kotlin.math.abs(relocated - expectedStart) > 300)
+                ) {
+                    toast("Der Text wurde inzwischen verändert. Bitte KI korrigieren erneut drücken.")
+                    return@withContext
+                }
+
+                localStart = relocated
+                localEnd = relocated + target.text.length
+            }
+
+            val absoluteStart = current.offset + localStart
+            val absoluteEnd = current.offset + localEnd
+            if (!editorInstance.setSelection(absoluteStart, absoluteEnd)) {
+                toast("Text konnte in dieser App nicht ausgewählt werden. Bitte Text markieren und erneut versuchen.")
+                return@withContext
+            }
+
             suppressUntil = SystemClock.elapsedRealtime() + 1_500L
-            editorInstance.commitText(replacement)
+            if (!editorInstance.commitText(replacement)) {
+                toast("Korrektur konnte in diesem Textfeld nicht eingesetzt werden")
+            }
         }
     }
 
@@ -177,23 +288,23 @@ class AiAssistant(private val context: Context) {
 }
 
 enum class AiStyle(val instruction: String) {
-    CORRECT(" Erfasse zuerst den beabsichtigten Sinn des gesamten Textes. Korrigiere Rechtschreibung, Grammatik, Groß- und Kleinschreibung, Zeichensetzung und offensichtliche Diktat- oder Worterkennungsfehler anhand des vollständigen Kontexts. Formuliere unklare Stellen nur dann verständlicher, wenn die beabsichtigte Aussage eindeutig erkennbar ist. Verändere keine Fakten, Namen, Zahlen, Anrede oder Tonlage. Erfinde keine Informationen. Bewahre ein vorhandenes abschließendes !, ?, ?!, !! oder … exakt und füge am Ende kein Satzzeichen hinzu, wenn der Nutzer noch keines gesetzt hat."),
-    FRIENDLY(" Erfasse den vollständigen Inhalt und formuliere ihn deutlich freundlicher, natürlicher, respektvoll und nahbar. Alle wichtigen Aussagen und Fakten müssen erhalten bleiben."),
-    PROFESSIONAL(" Erfasse den vollständigen Inhalt und formuliere ihn klar, professionell, sachlich und gut strukturiert. Korrigiere dabei unklare Formulierungen, ohne Fakten oder Absichten zu verändern."),
-    CASUAL(" Erfasse den vollständigen Inhalt und formuliere ihn deutlich lockerer, natürlicher und alltagstauglich. Die Kernaussage muss vollständig erhalten bleiben."),
-    HUMOROUS(" Erfasse den vollständigen Inhalt und formuliere ihn erkennbar humorvoll, pointiert und sympathisch. Der Witz darf deutlicher sein, aber Fakten und Kernaussage dürfen nicht erfunden oder verfälscht werden."),
-    IRONIC(" Erfasse den vollständigen Inhalt und formuliere ihn klar erkennbar sarkastisch und ironisch, pointiert und trocken, aber nicht beleidigend. Die eigentliche Aussage und alle Fakten müssen erhalten bleiben."),
-    FLIRTY(" Erfasse den vollständigen Inhalt und formuliere ihn charmant, spielerisch und eindeutig flirtend. Die Aussage soll selbstbewusst und sympathisch wirken, ohne Druck, Manipulation oder explizite sexuelle Beschreibungen."),
-    SUGGESTIVE(" Erfasse den vollständigen Inhalt und formuliere ihn für erwachsene, einvernehmliche Kommunikation verführerisch, zweideutig und mit klar erkennbarem sexuellem Interesse, aber nicht grafisch oder pornografisch. Kein Druck, keine Drohung, keine Manipulation und keine Annahme von Zustimmung."),
-    ELEGANT(" Erfasse den vollständigen Inhalt und formuliere ihn stilvoll, elegant, sprachlich hochwertig und natürlich. Nicht gestelzt und keine Fakten verändern."),
-    BUSINESS(" Erfasse den vollständigen Inhalt und formuliere ihn geschäftlich, verbindlich, klar und professionell. Wichtige Termine, Zahlen, Namen, Forderungen und Handlungsaufträge müssen vollständig erhalten bleiben."),
-    PERSONAL(" Erfasse den vollständigen Inhalt und formuliere ihn persönlich, warm und authentisch, als käme er direkt vom Absender. Keine erfundenen persönlichen Details hinzufügen."),
-    DU(" Behalte den vollständigen Inhalt bei und formuliere konsequent in direkter Du-Anrede. Passe Pronomen, Anrede und Satzbau natürlich an, ohne Fakten zu verändern."),
-    SIE(" Behalte den vollständigen Inhalt bei und formuliere konsequent in höflicher Sie-Anrede. Passe Pronomen, Anrede und Satzbau natürlich an, ohne Fakten zu verändern."),
-    SHORT(" Erfasse zuerst die Kernaussage und kürze den Text deutlich. Alle wichtigen Informationen, Namen, Zahlen und Handlungsaufforderungen müssen erhalten bleiben."),
-    SIMPLE(" Erfasse den vollständigen Inhalt und formuliere ihn in sehr einfacher, leicht verständlicher Sprache mit kurzen, klaren Sätzen. Keine wichtige Information weglassen."),
-    DIRECT(" Erfasse die Kernaussage und formuliere sie deutlich direkter, klarer und ohne unnötige Füllwörter. Fakten und Absicht vollständig erhalten und weiterhin angemessen höflich bleiben."),
-    PROMPT(" Verwandle den Rohtext in einen klaren, wirksamen Prompt für eine KI. Erfasse zuerst das eigentliche Ziel des Nutzers. Strukturiere den Prompt sinnvoll mit Aufgabe, relevantem Kontext, gewünschtem Ergebnis, wichtigen Vorgaben und gewünschtem Stil oder Ausgabeformat, soweit diese Informationen im Ausgangstext vorhanden oder eindeutig ableitbar sind. Erfinde keine Fakten, Namen, Daten, Anforderungen oder Einschränkungen. Wenn Informationen fehlen, formuliere den Prompt so, dass die KI vernünftig damit umgehen kann, ohne Dinge zu erfinden. Gib ausschließlich den verbesserten Prompt aus."),
+    CORRECT("Lies den gesamten Eingabetext zuerst vollständig und bestimme seine beabsichtigte Aussage. Korrigiere dann nur, was tatsächlich fehlerhaft oder durch Diktat offensichtlich falsch erkannt wurde: Rechtschreibung, Grammatik, Groß und Kleinschreibung, Wortwahl im eindeutigen Kontext und Zeichensetzung. Formuliere unklare Stellen nur dann um, wenn die beabsichtigte Aussage sicher erkennbar ist. Behalte Namen, Zahlen, Termine, Fachbegriffe, Anrede, Ton und persönliche Wortwahl bei. Erfinde nichts. Entferne keine wichtigen Informationen. Ein vorhandenes abschließendes !, ?, ?!, !! oder … muss exakt erhalten bleiben. Hat der Nutzer am Ende noch kein Satzzeichen gesetzt, füge keines hinzu. Gib ausschließlich den korrigierten Text aus."),
+    FRIENDLY("Formuliere denselben Inhalt spürbar freundlicher, warm und respektvoll, aber nicht überschwänglich. Vermeide Floskeln, künstliche Herzlichkeit und übertriebene Höflichkeit. Die Nachricht soll wie von einer echten Person wirken. Alle Fakten, Wünsche und Aussagen bleiben vollständig erhalten. Gib nur den fertigen Text aus."),
+    PROFESSIONAL("Formuliere den Inhalt professionell, klar, souverän und präzise. Nutze natürliche Geschäftssprache statt Amtsdeutsch oder KI Floskeln. Ordne Gedanken sinnvoll, beseitige Unklarheiten und lasse alle Fakten, Namen, Zahlen, Fristen und Absichten unverändert. Gib nur den fertigen Text aus."),
+    CASUAL("Formuliere denselben Inhalt locker, direkt und natürlich, wie in einer echten Alltagsnachricht. Keine künstliche Jugendsprache, keine übertriebene Coolness und keine KI Floskeln. Inhalt und Absicht vollständig erhalten. Gib nur den fertigen Text aus."),
+    HUMOROUS("Formuliere denselben Inhalt deutlich humorvoller und pointierter. Der Humor soll aus Situation und Wortwahl entstehen, nicht aus erfundenen Fakten. Keine Witze erklären. Nicht albern, verletzend oder künstlich wirken. Kernaussage und wichtige Informationen bleiben erhalten. Gib nur den fertigen Text aus."),
+    IRONIC("Formuliere denselben Inhalt klar erkennbar sarkastisch und trocken ironisch. Die Spitze darf deutlich sein, soll aber nicht beleidigen oder entmenschlichen. Keine Erklärung des Sarkasmus und keine erfundenen Behauptungen. Fakten und eigentliche Aussage bleiben vollständig erhalten. Gib nur den fertigen Text aus."),
+    FLIRTY("Formuliere den Inhalt charmant, spielerisch, selbstbewusst und eindeutig flirtend. Zeige echtes Interesse und leichte Spannung, ohne kitschig, plump, drängend oder manipulativ zu wirken. Keine expliziten sexuellen Beschreibungen. Vorhandene Fakten und Absichten erhalten. Gib nur den fertigen Text aus."),
+    SUGGESTIVE("Formuliere den Inhalt für erwachsene einvernehmliche Kommunikation verführerisch, selbstbewusst und deutlich zweideutig. Sexuelles Interesse darf klar erkennbar sein, aber ohne grafische sexuelle Beschreibungen, Druck, Drohung, Manipulation oder unterstellte Zustimmung. Der Ton soll natürlich und respektvoll bleiben. Gib nur den fertigen Text aus."),
+    ELEGANT("Formuliere denselben Inhalt stilvoll, souverän und sprachlich hochwertig, aber weiterhin natürlich. Vermeide gestelzte Fremdwörter, Pathos, Floskeln und übertriebene Eleganz. Aussage, Fakten und Persönlichkeit des Ausgangstextes bleiben erhalten. Gib nur den fertigen Text aus."),
+    BUSINESS("Formuliere den Inhalt als klare geschäftliche Nachricht. Das Ziel, gewünschte Handlung, Verantwortlichkeit, Termine, Zahlen und offene Punkte müssen sofort verständlich sein. Schreibe verbindlich und professionell, aber nicht bürokratisch. Keine Fakten ergänzen oder weglassen. Gib nur den fertigen Text aus."),
+    PERSONAL("Formuliere den Inhalt persönlich, authentisch und nahbar, als hätte der Absender ihn selbst bewusst geschrieben. Behalte individuelle Wortwahl und Emotionen soweit möglich. Keine generischen Wohlfühlfloskeln und keine erfundenen persönlichen Details. Gib nur den fertigen Text aus."),
+    DU("Ändere ausschließlich die Ansprache konsequent in eine natürliche Du Form. Passe Pronomen, Anrede und notwendigen Satzbau an. Inhalt, Ton, Fakten und Aussage dürfen sich sonst nicht verändern. Gib nur den fertigen Text aus."),
+    SIE("Ändere ausschließlich die Ansprache konsequent in eine höfliche, natürliche Sie Form. Passe Pronomen, Anrede und notwendigen Satzbau an. Inhalt, Ton, Fakten und Aussage dürfen sich sonst nicht verändern. Gib nur den fertigen Text aus."),
+    SHORT("Kürze den Text deutlich und entferne Wiederholungen, Füllwörter und Nebensächlichkeiten. Ziel ist ungefähr ein Drittel weniger Text, sofern das ohne Informationsverlust möglich ist. Namen, Zahlen, Termine, Forderungen, Entscheidungen und Handlungsaufforderungen müssen erhalten bleiben. Gib nur den gekürzten Text aus."),
+    SIMPLE("Formuliere den vollständigen Inhalt in sehr klarer Alltagssprache. Nutze kurze Sätze, bekannte Wörter und eine eindeutige Reihenfolge. Erkläre schwierige Formulierungen einfacher, ohne wichtige Informationen zu streichen oder neue Fakten hinzuzufügen. Gib nur den fertigen Text aus."),
+    DIRECT("Formuliere die Aussage wesentlich direkter und klarer. Beginne mit dem eigentlichen Anliegen, entferne Umwege, Füllwörter und unnötige Einleitungen. Bleibe angemessen respektvoll. Fakten, Bedingungen und Absicht müssen vollständig erhalten bleiben. Gib nur den fertigen Text aus."),
+    PROMPT("Der Eingabetext ist ein Rohentwurf für einen KI Prompt. Ermittle zuerst das konkrete Ziel. Formuliere daraus einen präzisen Arbeitsauftrag mit relevantem Kontext, klaren Anforderungen, Grenzen und gewünschtem Ausgabeformat, soweit diese Angaben vorhanden oder eindeutig ableitbar sind. Entferne Widersprüche und unnötige Wiederholungen. Erfinde niemals Fakten, Namen, Daten oder Anforderungen. Fehlen entscheidende Angaben, formuliere sinnvolle Platzhalter oder weise im Prompt darauf hin, was die ausführende KI selbst klären soll. Der verbesserte Prompt muss direkt verwendbar sein. Gib ausschließlich den verbesserten Prompt aus."),
 }
 
 class AiException(message: String) : Exception(message)
