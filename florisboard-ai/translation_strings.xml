@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="quick_action__translate">Übersetzen</string>
-    <string name="quick_action__translate__tooltip">Markierten Text oder aktuellen Satz in die aktive Tastatursprache übersetzen</string>
+    <string name="quick_action__translate">Mit Google übersetzen</string>
+    <string name="quick_action__translate__tooltip">Markierten Text oder aktuellen Absatz mit Google Translate bzw. Google ML Kit übersetzen</string>
 </resources>
