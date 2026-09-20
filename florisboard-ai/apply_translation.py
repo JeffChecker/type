@@ -18,6 +18,8 @@ def patch(path, old, new):
 ai_dir = SRC / "kotlin/dev/patrickgold/florisboard/ime/ai"
 ai_dir.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(CTRL / "LocalTranslator.kt", ai_dir / "LocalTranslator.kt")
+shutil.copyfile(CTRL / "TranslationBackend.kt", ai_dir / "TranslationBackend.kt")
+shutil.copyfile(CTRL / "TranslationQuickSetup.kt", ai_dir / "TranslationQuickSetup.kt")
 shutil.copyfile(CTRL / "translation_strings.xml", SRC / "res/values/translation_strings.xml")
 
 patch(
@@ -93,8 +95,9 @@ patch(
     "            KeyCode.AI_TRANSLATE -> localTranslator.translateTo(\n"
     "                targetLocale = subtypeManager.activeSubtype.primaryLocale,\n"
     "                sensitiveField = activeState.keyVariation != KeyVariation.NORMAL,\n"
+    "                incognito = activeState.isIncognitoMode,\n"
     "                rawEditor = editorInstance.activeInfo.isRawInputEditor,\n"
     "            )\n",
 )
 
-print("On-device translation integrated with unique key code")
+print("Hybrid Google Cloud + ML Kit translation integrated with dynamic language list")
