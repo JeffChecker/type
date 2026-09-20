@@ -1,4 +1,4 @@
-# KI Tastatur Beta v1
+# KI Tastatur Beta v2
 
 **Die Android Tastatur mit KI direkt beim Schreiben.**
 
@@ -10,7 +10,7 @@ Kein Kopieren in andere Apps. Kein automatisches Eingreifen während du noch sch
 
 ### Texte verstehen statt nur Rechtschreibung prüfen
 
-Mit **KI korrigieren** wird nicht nur auf Rechtschreibung und Grammatik geschaut. Der gesamte Absatz wird im Zusammenhang betrachtet. Dadurch können auch Diktierfehler, unklare Formulierungen und missverständliche Sätze sinnvoll verbessert werden.
+Mit **KI korrigieren** wird nicht nur auf Rechtschreibung und Grammatik geschaut. Beta v2 verwendet eine robuste Fallback Logik: markierter Text, aktueller Absatz, aktueller Satz oder ein Textblock vor dem Cursor. Dadurch funktioniert die Korrektur zuverlässiger in unterschiedlichen Apps und Eingabefeldern.
 
 Die Korrektur startet ausschließlich auf Knopfdruck. Eigene Satzzeichen wie `!`, `?`, `?!`, `!!` oder `…` sollen erhalten bleiben.
 
@@ -41,7 +41,7 @@ Unterstützt werden aktuell:
 - **Anthropic Claude**
 - **Groq**
 
-Die verfügbaren Modelle werden direkt über die jeweilige API geladen. Du kannst selbst ein Modell auswählen oder die automatische Auswahl verwenden.
+Die Modellkonfiguration ist jetzt direkt auf der Hauptseite sichtbar. Anbieter, API Schlüssel, Modellwahl, Modellliste und Verbindungstest sind ohne verstecktes Untermenü erreichbar. Die verfügbaren Modelle werden direkt über die jeweilige API geladen.
 
 ## Für Tippen und Spracheingabe
 
@@ -55,7 +55,7 @@ Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil ode
 
 ## Installation
 
-1. **KI-Tastatur-Beta-v1.apk** herunterladen.
+1. **KI-Tastatur-Beta-v2.apk** herunterladen.
 2. APK installieren.
 3. KI Tastatur in den Android Einstellungen aktivieren.
 4. Als Eingabemethode auswählen.
@@ -64,9 +64,9 @@ Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil ode
 7. Modelle laden und eines auswählen oder `auto` verwenden.
 8. Verbindung testen.
 
-## Beta v1
+## Beta v2
 
-Dies ist die erste öffentliche Beta. Die App wird mit jeder Version weiter verbessert. Die nächsten Testversionen werden als **Beta v2, Beta v3, Beta v4** usw. veröffentlicht.
+Diese Beta konzentriert sich auf zuverlässigere KI Korrektur, eine direkt sichtbare Modellkonfiguration und deutlich präzisere Stilprompts. Weitere Testversionen folgen fortlaufend als **Beta v3, Beta v4** usw.
 
 ## Open Source Grundlage
 
