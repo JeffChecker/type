@@ -120,10 +120,10 @@ object AiBackend {
         val model = resolveModel(context, provider, key)
         val instructions = translationPrompt(targetLanguageName, targetLanguageCode)
         return when (provider) {
-            AiProvider.OPENAI -> requestOpenAi(key, model, instructions, text)
-            AiProvider.GEMINI -> requestGemini(key, model, instructions, text, AiStyle.CORRECT)
-            AiProvider.CLAUDE -> requestClaude(key, model, instructions, text)
-            AiProvider.GROQ -> requestGroq(key, model, instructions, text, AiStyle.CORRECT)
+            AiProvider.OPENAI -> requestOpenAi(key, model, instructions, text, maxTokens = 2_500)
+            AiProvider.GEMINI -> requestGemini(key, model, instructions, text, AiStyle.CORRECT, maxTokens = 2_500)
+            AiProvider.CLAUDE -> requestClaude(key, model, instructions, text, maxTokens = 2_500)
+            AiProvider.GROQ -> requestGroq(key, model, instructions, text, AiStyle.CORRECT, maxTokens = 2_500)
         }
     }
 
@@ -280,12 +280,12 @@ object AiBackend {
         AiProvider.GROQ -> requestGroq(apiKey, model, prompt(style, voiceLike), text, style)
     }
 
-    private suspend fun requestOpenAi(apiKey: String, model: String, instructions: String, text: String): String = withContext(Dispatchers.IO) {
+    private suspend fun requestOpenAi(apiKey: String, model: String, instructions: String, text: String, maxTokens: Int = 700): String = withContext(Dispatchers.IO) {
         val body = buildJsonObject {
             put("model", model)
             put("instructions", instructions)
             put("input", text)
-            put("max_output_tokens", 700)
+            put("max_output_tokens", maxTokens)
             put("store", false)
         }
         val (code, response) = post(OPENAI_RESPONSES, AiProvider.OPENAI, apiKey, body.toString())
@@ -301,7 +301,7 @@ object AiBackend {
         clean(answer).ifBlank { throw AiException("OpenAI hat keinen Text zurückgegeben.") }
     }
 
-    private suspend fun requestGemini(apiKey: String, model: String, systemPrompt: String, text: String, style: AiStyle): String = withContext(Dispatchers.IO) {
+    private suspend fun requestGemini(apiKey: String, model: String, systemPrompt: String, text: String, style: AiStyle, maxTokens: Int = 700): String = withContext(Dispatchers.IO) {
         val body = buildJsonObject {
             put("systemInstruction", buildJsonObject {
                 put("parts", buildJsonArray { add(buildJsonObject { put("text", systemPrompt) }) })
@@ -313,7 +313,7 @@ object AiBackend {
                 })
             })
             put("generationConfig", buildJsonObject {
-                put("maxOutputTokens", 700)
+                put("maxOutputTokens", maxTokens)
                 put("temperature", if (style == AiStyle.CORRECT) 0.05 else 0.55)
             })
         }
@@ -327,10 +327,10 @@ object AiBackend {
         clean(answer).ifBlank { throw AiException("Gemini hat keinen Text zurückgegeben.") }
     }
 
-    private suspend fun requestClaude(apiKey: String, model: String, systemPrompt: String, text: String): String = withContext(Dispatchers.IO) {
+    private suspend fun requestClaude(apiKey: String, model: String, systemPrompt: String, text: String, maxTokens: Int = 700): String = withContext(Dispatchers.IO) {
         val body = buildJsonObject {
             put("model", model)
-            put("max_tokens", 700)
+            put("max_tokens", maxTokens)
             put("system", systemPrompt)
             put("messages", buildJsonArray {
                 add(buildJsonObject { put("role", "user"); put("content", text) })
@@ -346,11 +346,11 @@ object AiBackend {
         clean(answer).ifBlank { throw AiException("Claude hat keinen Text zurückgegeben.") }
     }
 
-    private suspend fun requestGroq(apiKey: String, model: String, systemPrompt: String, text: String, style: AiStyle): String = withContext(Dispatchers.IO) {
+    private suspend fun requestGroq(apiKey: String, model: String, systemPrompt: String, text: String, style: AiStyle, maxTokens: Int = 700): String = withContext(Dispatchers.IO) {
         val body = buildJsonObject {
             put("model", model)
             put("temperature", if (style == AiStyle.CORRECT) 0.05 else 0.55)
-            put("max_completion_tokens", 700)
+            put("max_completion_tokens", maxTokens)
             put("messages", buildJsonArray {
                 add(buildJsonObject { put("role", "system"); put("content", systemPrompt) })
                 add(buildJsonObject { put("role", "user"); put("content", text) })
