@@ -6,7 +6,7 @@
 <p align="center"><strong>Schreiben. Verstehen. Verbessern. Direkt auf der Tastatur.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v2"><strong>Beta v2 herunterladen</strong></a>
+  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v3"><strong>Beta v3 herunterladen</strong></a>
 </p>
 
 ## Deine Tastatur kann jetzt mehr als tippen
@@ -39,7 +39,7 @@ Aus einer groben Idee wird ein klarer Prompt. **Prompt+** erkennt Ziel, Kontext,
 
 Texte können direkt aus der Tastatur übersetzt werden. Die Ausgangssprache wird automatisch erkannt. Als Ziel wird die aktuell aktive Tastatursprache verwendet.
 
-Die Übersetzung läuft lokal über **Google ML Kit** und benötigt dafür keinen Cloud API Schlüssel.
+Die Übersetzung arbeitet in Beta v3 hybrid. Mit einem eigenen **Google Cloud Translation API Schlüssel** wird für höhere Qualität und eine deutlich größere Sprachauswahl Google Cloud Translation verwendet. Ohne Cloud Schlüssel oder im Inkognito Modus fällt die Tastatur auf **Google ML Kit** auf dem Gerät zurück. Die Zielsprache kann der aktiven Tastatursprache folgen oder aus der von Google gelieferten Sprachliste gewählt werden.
 
 ### Freie Wahl des KI Anbieters
 
@@ -64,7 +64,7 @@ API Schlüssel werden nicht in der App mitgeliefert und nicht im öffentlichen Q
 
 ## Installation
 
-1. Lade **KI Tastatur Beta v2** aus den GitHub Releases herunter.
+1. Lade **KI Tastatur Beta v3** aus den GitHub Releases herunter.
 2. Installiere die APK.
 3. Aktiviere KI Tastatur in den Android Einstellungen.
 4. Lege sie als Eingabemethode fest.
@@ -74,7 +74,7 @@ API Schlüssel werden nicht in der App mitgeliefert und nicht im öffentlichen Q
 8. Lade die verfügbaren Modelle und wähle eines aus oder nutze `auto`.
 9. Teste die Verbindung.
 
-> Beta v2 ist eine Testversion. Die Korrekturlogik, Modellkonfiguration und Stilprompts wurden gegenüber Beta v1 deutlich überarbeitet.
+> Beta v3 ist eine Testversion. Schwerpunkt dieser Version ist die neue Hybrid Übersetzung mit Google Cloud Translation, dynamischer Sprachliste und Offline Fallback über ML Kit.
 
 ## Technische Basis
 
