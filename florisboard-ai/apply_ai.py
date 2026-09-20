@@ -29,6 +29,7 @@ ai_dir = SRC / "kotlin/dev/patrickgold/florisboard/ime/ai"
 ai_dir.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(CTRL / "AiAssistant.kt", ai_dir / "AiAssistant.kt")
 shutil.copyfile(CTRL / "AiSettingsActivity.kt", ai_dir / "AiSettingsActivity.kt")
+shutil.copyfile(CTRL / "AiQuickSetup.kt", ai_dir / "AiQuickSetup.kt")
 shutil.copyfile(CTRL / "ai_strings.xml", SRC / "res/values/ai_strings.xml")
 shutil.copyfile(
     CTRL / "QuickActionButton.kt",
@@ -336,6 +337,30 @@ s = replace_once(
     "        <!-- Main App Activity -->\n",
     "Manifest AI settings activity",
 )
+write(path, s)
+
+# Put the complete AI model configuration directly on the main settings page.
+path = SRC / "kotlin/dev/patrickgold/florisboard/app/settings/HomeScreen.kt"
+s = read(path)
+s = replace_once(
+    s,
+    "import dev.patrickgold.florisboard.R\n",
+    "import dev.patrickgold.florisboard.R\n"
+    "import dev.patrickgold.florisboard.ime.ai.AiQuickSetupPanel\n",
+    "HomeScreen AI setup import",
+)
+home_first_pref = """        Preference(
+            icon = Icons.Default.Language,
+            title = stringRes(R.string.settings__localization__title),
+            onClick = { navController.navigate(Routes.Settings.Localization) },
+        )
+"""
+home_ai_panel = """        AiQuickSetupPanel(
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
+            compact = true,
+        )
+""" + home_first_pref
+s = replace_once(s, home_first_pref, home_ai_panel, "HomeScreen inline AI setup")
 write(path, s)
 
 print("AI patch applied to FlorisBoard v0.5.2")
