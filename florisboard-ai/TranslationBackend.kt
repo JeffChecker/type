@@ -5,6 +5,7 @@ import android.text.Html
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -17,6 +18,7 @@ import kotlinx.serialization.json.put
 
 enum class TranslationMode(val id: String, val displayName: String) {
     AUTO("auto", "Automatisch"),
+    AI("ai", "KI"),
     CLOUD("cloud", "Google Cloud"),
     LOCAL("local", "Offline");
 
@@ -61,6 +63,30 @@ object TranslationBackend {
     }
 
     fun apiConsoleUrl(): String = "https://console.cloud.google.com/apis/library/translate.googleapis.com"
+
+    fun commonAiLanguages(displayLocale: Locale = Locale.GERMAN): List<TranslationLanguage> {
+        val base = Locale.getISOLanguages().map { code ->
+            val locale = Locale.forLanguageTag(code)
+            TranslationLanguage(
+                code = code,
+                name = locale.getDisplayLanguage(displayLocale).ifBlank { code },
+            )
+        }.filter { it.name.isNotBlank() }
+
+        val variants = listOf(
+            TranslationLanguage("zh-CN", "Chinesisch (vereinfacht)"),
+            TranslationLanguage("zh-TW", "Chinesisch (traditionell)"),
+            TranslationLanguage("pt-BR", "Portugiesisch (Brasilien)"),
+            TranslationLanguage("pt-PT", "Portugiesisch (Portugal)"),
+            TranslationLanguage("en-GB", "Englisch (Großbritannien)"),
+            TranslationLanguage("en-US", "Englisch (USA)"),
+            TranslationLanguage("es-419", "Spanisch (Lateinamerika)"),
+        )
+
+        return (variants + base)
+            .distinctBy { it.code }
+            .sortedBy { it.name.lowercase(displayLocale) }
+    }
 
     fun normalizeKeyboardLanguageTag(tag: String): String {
         val cleaned = tag.replace('_', '-')
