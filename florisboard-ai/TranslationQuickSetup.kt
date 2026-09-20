@@ -34,11 +34,13 @@ fun TranslationQuickSetupPanel(compact: Boolean = true) {
     var apiKey by remember { mutableStateOf(prefs.getString(TranslationBackend.KEY_GOOGLE_TRANSLATE_API_KEY, "").orEmpty()) }
     var modeId by remember { mutableStateOf(prefs.getString(TranslationBackend.KEY_TRANSLATION_MODE, TranslationMode.AUTO.id) ?: TranslationMode.AUTO.id) }
     var target by remember { mutableStateOf(prefs.getString(TranslationBackend.KEY_TRANSLATION_TARGET, TranslationBackend.TARGET_ACTIVE_KEYBOARD) ?: TranslationBackend.TARGET_ACTIVE_KEYBOARD) }
-    var languages by remember { mutableStateOf<List<TranslationLanguage>>(emptyList()) }
+    var languages by remember { mutableStateOf(TranslationBackend.commonAiLanguages()) }
     var languageMenuExpanded by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val mode = TranslationMode.fromId(modeId)
+    val providerName = AiBackend.providerDisplayName(context)
+    val modelName = AiBackend.modelSetting(context)
 
     fun save(): Boolean = prefs.edit()
         .putString(TranslationBackend.KEY_GOOGLE_TRANSLATE_API_KEY, apiKey.trim())
@@ -62,63 +64,26 @@ fun TranslationQuickSetupPanel(compact: Boolean = true) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text("Übersetzung", style = MaterialTheme.typography.titleLarge)
-        Text("Automatisch nutzt Google Cloud Translation für bessere Qualität und eine größere Sprachauswahl, wenn ein eigener API Schlüssel eingerichtet ist. Sonst wird lokal mit Google ML Kit übersetzt.")
+        Text("Standardmäßig übersetzt die bereits eingerichtete KI. Aktuell: " + providerName + " • " + modelName + ". Dafür wird derselbe API Schlüssel wie bei Korrigieren und Stil verwendet.")
 
         Text("Übersetzungsmodus", style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Button(onClick = { chooseMode(TranslationMode.AUTO) }) {
                 Text(if (mode == TranslationMode.AUTO) "Automatisch ✓" else "Automatisch")
             }
+            Button(onClick = { chooseMode(TranslationMode.AI) }) {
+                Text(if (mode == TranslationMode.AI) "KI ✓" else "KI")
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Button(onClick = { chooseMode(TranslationMode.CLOUD) }) {
-                Text(if (mode == TranslationMode.CLOUD) "Cloud ✓" else "Cloud")
+                Text(if (mode == TranslationMode.CLOUD) "Google ✓" else "Google")
             }
             Button(onClick = { chooseMode(TranslationMode.LOCAL) }) {
                 Text(if (mode == TranslationMode.LOCAL) "Offline ✓" else "Offline")
             }
         }
-
-        OutlinedTextField(
-            value = apiKey,
-            onValueChange = { apiKey = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Google Cloud Translation API Schlüssel") },
-            supportingText = { Text("Wird nur auf dem Gerät gespeichert. Cloud Übersetzungen können Google Cloud Kosten verursachen.") },
-            visualTransformation = PasswordVisualTransformation(),
-            singleLine = true,
-        )
-
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Button(onClick = {
-                status = if (save()) "Übersetzungseinstellungen gespeichert" else "Speichern fehlgeschlagen"
-            }) { Text("Speichern") }
-            Button(onClick = {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TranslationBackend.apiConsoleUrl())))
-            }) { Text("Google API öffnen") }
-        }
-
-        Button(
-            onClick = {
-                if (!save()) {
-                    status = "Speichern fehlgeschlagen"
-                    return@Button
-                }
-                if (apiKey.isBlank()) {
-                    status = "Bitte zuerst einen Google Cloud Translation API Schlüssel eintragen"
-                    return@Button
-                }
-                status = "Google Translate Sprachen werden geladen …"
-                scope.launch {
-                    status = try {
-                        languages = TranslationBackend.listCloudLanguages(apiKey.trim(), "de")
-                        languages.size.toString() + " unterstützte Sprachen geladen"
-                    } catch (e: Throwable) {
-                        languages = emptyList()
-                        e.message ?: "Sprachliste konnte nicht geladen werden"
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("Unterstützte Sprachen von Google laden") }
+        Text("Automatisch: KI zuerst, danach optional Google Cloud und zuletzt Offline. Im Inkognito Modus wird ausschließlich lokal übersetzt.")
 
         Text("Zielsprache", style = MaterialTheme.typography.titleMedium)
         Box {
@@ -161,9 +126,57 @@ fun TranslationQuickSetupPanel(compact: Boolean = true) {
             singleLine = true,
         )
 
-        Text("Cloud Übersetzungen werden an Google Translate gesendet. Im Inkognito Modus wird automatisch nur die lokale Offline Übersetzung verwendet.")
-        Text("Übersetzungen werden durch Google Translate bzw. Google ML Kit bereitgestellt.", style = MaterialTheme.typography.bodySmall)
+        Button(
+            onClick = { status = if (save()) "Übersetzungseinstellungen gespeichert" else "Speichern fehlgeschlagen" },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Übersetzung speichern") }
 
+        Text("Optionaler Google Cloud Fallback", style = MaterialTheme.typography.titleMedium)
+        Text("Nur nötig, wenn du Google Translate zusätzlich als Fallback oder eigenen Übersetzungsmodus verwenden möchtest.")
+        OutlinedTextField(
+            value = apiKey,
+            onValueChange = { apiKey = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Google Cloud Translation API Schlüssel, optional") },
+            supportingText = { Text("Der normale KI API Schlüssel oben reicht für KI Übersetzungen aus.") },
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Button(onClick = {
+                status = if (save()) "Google Fallback gespeichert" else "Speichern fehlgeschlagen"
+            }) { Text("Google speichern") }
+            Button(onClick = {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TranslationBackend.apiConsoleUrl())))
+            }) { Text("Google API öffnen") }
+        }
+
+        if (apiKey.isNotBlank()) {
+            Button(
+                onClick = {
+                    if (!save()) {
+                        status = "Speichern fehlgeschlagen"
+                        return@Button
+                    }
+                    status = "Google Sprachliste wird aktualisiert …"
+                    scope.launch {
+                        status = try {
+                            val cloud = TranslationBackend.listCloudLanguages(apiKey.trim(), "de")
+                            languages = (TranslationBackend.commonAiLanguages() + cloud)
+                                .distinctBy { it.code }
+                                .sortedBy { it.name.lowercase() }
+                            cloud.size.toString() + " Google Sprachen geladen"
+                        } catch (e: Throwable) {
+                            e.message ?: "Google Sprachliste konnte nicht geladen werden"
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Google Sprachliste zusätzlich laden") }
+        }
+
+        Text("KI Übersetzungen werden an den von dir ausgewählten KI Anbieter gesendet. Google Cloud wird nur genutzt, wenn du es auswählst oder als Fallback eingerichtet hast. Inkognito bleibt lokal.", style = MaterialTheme.typography.bodySmall)
         if (status.isNotBlank()) Text(status, style = MaterialTheme.typography.bodyLarge)
     }
 }
