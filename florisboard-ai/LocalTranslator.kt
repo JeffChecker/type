@@ -10,33 +10,124 @@ import com.google.mlkit.nl.translate.TranslatorOptions
 import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.ime.editor.EditorContent
 import dev.patrickgold.florisboard.lib.FlorisLocale
+import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
+/**
+ * Hybride Übersetzung:
+ * - Google Cloud Translation für höhere Qualität und größere Sprachauswahl.
+ * - ML Kit lokal als Offline- und Datenschutz-Fallback.
+ */
 class LocalTranslator(private val context: Context) {
     private val appContext = context.applicationContext
     private val editorInstance by context.editorInstance()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    fun translateTo(targetLocale: FlorisLocale, sensitiveField: Boolean, rawEditor: Boolean) {
+    fun translateTo(
+        targetLocale: FlorisLocale,
+        sensitiveField: Boolean,
+        incognito: Boolean,
+        rawEditor: Boolean,
+    ) {
         if (sensitiveField || rawEditor) {
             toast("Übersetzung ist in diesem Eingabefeld deaktiviert")
             return
         }
-        val target = selectedOrCurrentSentenceTarget(editorInstance.activeContent)
+
+        val target = selectedOrBestTarget(editorInstance.activeContent)
         if (target == null || target.text.isBlank()) {
             toast("Kein Text zum Übersetzen gefunden")
             return
         }
-        if (target.text.length > 2_000) {
+        if (target.text.length > 5_000) {
             toast("Bitte einen kürzeren Text oder Absatz markieren")
             return
         }
 
-        val targetLanguage = TranslateLanguage.fromLanguageTag(targetLocale.languageTag())
-        if (targetLanguage == null) {
-            toast("Diese Zielsprache wird für die Offline Übersetzung nicht unterstützt")
+        val setting = TranslationBackend.targetSetting(appContext)
+        val targetCode = if (setting == TranslationBackend.TARGET_ACTIVE_KEYBOARD) {
+            TranslationBackend.normalizeKeyboardLanguageTag(targetLocale.languageTag())
+        } else {
+            setting
+        }
+        val targetName = if (setting == TranslationBackend.TARGET_ACTIVE_KEYBOARD) {
+            targetLocale.displayName()
+        } else {
+            Locale.forLanguageTag(targetCode).getDisplayLanguage(Locale.GERMAN)
+                .ifBlank { targetCode }
+        }
+
+        val mode = TranslationBackend.mode(appContext)
+        val cloudKey = TranslationBackend.apiKey(appContext)
+
+        when {
+            incognito -> {
+                toast("Inkognito: Übersetzung bleibt auf dem Gerät")
+                translateLocal(target, targetCode, targetName)
+            }
+            mode == TranslationMode.LOCAL -> translateLocal(target, targetCode, targetName)
+            mode == TranslationMode.CLOUD -> {
+                if (cloudKey.isBlank()) {
+                    toast("Bitte zuerst einen Google Cloud Translation API Schlüssel eintragen")
+                } else {
+                    translateCloud(target, targetCode, targetName, cloudKey, allowLocalFallback = false)
+                }
+            }
+            cloudKey.isNotBlank() -> {
+                translateCloud(target, targetCode, targetName, cloudKey, allowLocalFallback = true)
+            }
+            else -> translateLocal(target, targetCode, targetName)
+        }
+    }
+
+    private fun translateCloud(
+        target: Target,
+        targetCode: String,
+        targetName: String,
+        apiKey: String,
+        allowLocalFallback: Boolean,
+    ) {
+        toast("Übersetze mit Google Translate nach $targetName …")
+        scope.launch {
+            try {
+                val result = TranslationBackend.translateCloud(
+                    apiKey = apiKey,
+                    text = target.text,
+                    targetLanguage = targetCode,
+                )
+                withContext(Dispatchers.Main) {
+                    applyIfStillCurrent(target, result.text, "Mit Google Translate übersetzt")
+                }
+            } catch (e: Throwable) {
+                if (allowLocalFallback) {
+                    withContext(Dispatchers.Main) {
+                        toast("Cloud Übersetzung nicht verfügbar. Offline Versuch startet.")
+                        translateLocal(target, targetCode, targetName)
+                    }
+                } else {
+                    toast(e.message ?: "Google Translate Übersetzung fehlgeschlagen")
+                }
+            }
+        }
+    }
+
+    private fun translateLocal(target: Target, targetCode: String, targetName: String) {
+        if (target.text.length > 2_500) {
+            toast("Für Offline Übersetzung bitte höchstens 2500 Zeichen markieren")
             return
         }
 
-        toast("Sprache wird erkannt …")
+        val targetLanguage = TranslateLanguage.fromLanguageTag(targetCode)
+        if (targetLanguage == null) {
+            toast("Diese Sprache ist offline nicht verfügbar. Für mehr Sprachen Google Cloud Translation einrichten.")
+            return
+        }
+
+        toast("Offline Übersetzung nach $targetName wird vorbereitet …")
         val identifier = LanguageIdentification.getClient()
         identifier.identifyLanguage(target.text)
             .addOnSuccessListener { sourceTag ->
@@ -47,11 +138,11 @@ class LocalTranslator(private val context: Context) {
                 }
                 val sourceLanguage = TranslateLanguage.fromLanguageTag(sourceTag)
                 if (sourceLanguage == null) {
-                    toast("Ausgangssprache wird nicht unterstützt")
+                    toast("Ausgangssprache wird offline nicht unterstützt")
                     return@addOnSuccessListener
                 }
                 if (sourceLanguage == targetLanguage) {
-                    toast("Text ist bereits in ${targetLocale.displayName()}")
+                    toast("Text ist bereits in $targetName")
                     return@addOnSuccessListener
                 }
 
@@ -61,79 +152,128 @@ class LocalTranslator(private val context: Context) {
                     .build()
                 val translator = Translation.getClient(options)
                 val conditions = DownloadConditions.Builder().build()
-                toast("Übersetzungsmodell wird vorbereitet …")
                 translator.downloadModelIfNeeded(conditions)
                     .addOnSuccessListener {
                         translator.translate(target.text)
                             .addOnSuccessListener { translated ->
-                                applyIfStillCurrent(target, translated)
                                 translator.close()
+                                applyIfStillCurrent(target, translated, "Offline mit Google ML Kit übersetzt")
                             }
                             .addOnFailureListener {
                                 translator.close()
-                                toast("Übersetzung fehlgeschlagen")
+                                toast("Offline Übersetzung fehlgeschlagen")
                             }
                     }
                     .addOnFailureListener {
                         translator.close()
-                        toast("Sprachmodell konnte nicht geladen werden")
+                        toast("Offline Sprachmodell konnte nicht geladen werden")
                     }
             }
             .addOnFailureListener {
                 identifier.close()
-                toast("Sprache konnte nicht erkannt werden")
+                toast("Ausgangssprache konnte nicht erkannt werden")
             }
     }
 
     private data class Target(val start: Int, val end: Int, val text: String)
 
-    private fun selectedOrCurrentSentenceTarget(content: EditorContent): Target? {
+    private fun selectedOrBestTarget(content: EditorContent): Target? {
         if (!content.localSelection.isValid || content.offset < 0) return null
-        if (content.selectedText.isNotEmpty()) {
-            return Target(
-                start = content.offset + content.localSelection.start,
-                end = content.offset + content.localSelection.end,
-                text = content.selectedText,
-            )
+
+        val localStart = minOf(content.localSelection.start, content.localSelection.end)
+            .coerceIn(0, content.text.length)
+        val localEnd = maxOf(content.localSelection.start, content.localSelection.end)
+            .coerceIn(0, content.text.length)
+        if (localEnd > localStart) {
+            val selected = content.text.substring(localStart, localEnd)
+            if (selected.isNotBlank()) {
+                return Target(content.offset + localStart, content.offset + localEnd, selected)
+            }
         }
-        val cursor = content.localSelection.end.coerceIn(0, content.text.length)
-        if (cursor <= 0) return null
 
-        var end = cursor
-        while (end > 0 && content.text[end - 1].isWhitespace()) end--
-        if (end <= 0) return null
-
-        var searchEnd = end
-        if (content.text[searchEnd - 1] in charArrayOf('.', '!', '?', '…')) searchEnd--
-        val prefix = content.text.substring(0, searchEnd.coerceAtLeast(0))
-        val boundary = prefix.indexOfLast { it == '.' || it == '!' || it == '?' || it == '…' || it == '\n' }
-        var start = boundary + 1
-        while (start < end && content.text[start].isWhitespace()) start++
-        if (start >= end) return null
-
-        return Target(
-            start = content.offset + start,
-            end = content.offset + end,
-            text = content.text.substring(start, end),
-        )
+        currentParagraphTarget(content)?.let {
+            if (it.text.length <= 5_000) return it
+        }
+        return currentSentenceTarget(content)
     }
 
-    private fun applyIfStillCurrent(target: Target, replacement: String) {
+    private fun currentParagraphTarget(content: EditorContent): Target? {
+        val cursor = content.localSelection.end.coerceIn(0, content.text.length)
+        var start = if (cursor > 0) content.text.lastIndexOf('\n', cursor - 1) + 1 else 0
+        var end = content.text.indexOf('\n', cursor)
+        if (end < 0) end = content.text.length
+        while (start < end && content.text[start].isWhitespace()) start++
+        while (end > start && content.text[end - 1].isWhitespace()) end--
+        if (start >= end) return null
+        return Target(content.offset + start, content.offset + end, content.text.substring(start, end))
+    }
+
+    private fun currentSentenceTarget(content: EditorContent): Target? {
+        val text = content.text
+        if (text.isEmpty()) return null
+        val cursor = content.localSelection.end.coerceIn(0, text.length)
+        val punctuation = charArrayOf('.', '!', '?', '…')
+
+        var scan = (cursor - 1).coerceAtLeast(0)
+        while (scan >= 0 && text[scan].isWhitespace()) scan--
+        while (scan >= 0 && text[scan] in punctuation) scan--
+        while (scan >= 0 && text[scan] !in punctuation && text[scan] != '\n') scan--
+        var start = scan + 1
+
+        var end = cursor
+        while (end < text.length && text[end] !in punctuation && text[end] != '\n') end++
+        while (end < text.length && text[end] in punctuation) end++
+        while (start < end && text[start].isWhitespace()) start++
+        while (end > start && text[end - 1].isWhitespace()) end--
+        if (start >= end) return null
+        return Target(content.offset + start, content.offset + end, text.substring(start, end))
+    }
+
+    private fun applyIfStillCurrent(target: Target, replacement: String, successMessage: String) {
         val current = editorInstance.activeContent
-        if (current.offset < 0) return
-        val localStart = target.start - current.offset
-        val localEnd = target.end - current.offset
-        if (localStart < 0 || localEnd > current.text.length || localStart >= localEnd) return
-        if (current.text.substring(localStart, localEnd) != target.text) {
-            toast("Text wurde inzwischen geändert")
+        if (current.offset < 0) {
+            toast("Textfeld ist nicht mehr verfügbar")
             return
         }
-        if (!editorInstance.setSelection(target.start, target.end)) return
-        editorInstance.commitText(replacement)
-        toast("Übersetzt")
+
+        val expectedStart = target.start - current.offset
+        val expectedEnd = target.end - current.offset
+        var localStart = expectedStart
+        var localEnd = expectedEnd
+        val exactMatch =
+            localStart >= 0 && localEnd <= current.text.length && localStart < localEnd &&
+                current.text.substring(localStart, localEnd) == target.text
+
+        if (!exactMatch) {
+            val hit = current.text.indexOf(target.text)
+            if (hit < 0) {
+                toast("Text wurde inzwischen verändert. Bitte erneut übersetzen.")
+                return
+            }
+            localStart = hit
+            localEnd = hit + target.text.length
+        }
+
+        val absoluteStart = current.offset + localStart
+        val absoluteEnd = current.offset + localEnd
+        if (!editorInstance.setSelection(absoluteStart, absoluteEnd)) {
+            toast("Text konnte in dieser App nicht ausgewählt werden")
+            return
+        }
+        if (!editorInstance.commitText(replacement)) {
+            toast("Übersetzung konnte nicht eingesetzt werden")
+            return
+        }
+        toast(successMessage)
     }
 
     private fun toast(message: String) {
-        Toast.makeText(appContext, message, Toast.LENGTH_SHORT).show()
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            Toast.makeText(appContext, message, Toast.LENGTH_SHORT).show()
+        } else {
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                Toast.makeText(appContext, message, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
