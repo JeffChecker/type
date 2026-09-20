@@ -22,6 +22,8 @@ new = '''        append("Behalte die Sprache des Eingabetextes bei und schreibe 
         append("Vermeide Gedankenstriche und Bindestrich Konstruktionen, sofern sie sprachlich nicht zwingend erforderlich sind. Nutze lieber normale, natürlich fließende Sätze. ")
         append("Erhalte den persönlichen Ton, die Wortwahl und die Absicht des Ausgangstextes, soweit der gewählte Stil nichts anderes verlangt. ")
         append("Schreibe abwechslungsreich und idiomatisch, nicht steril, werblich oder überperfekt. ")
+        append("Gib ausschließlich den fertigen bearbeiteten Text aus. Keine Vorbemerkung, keine Erklärung, keine Anführungszeichen und keine Analyse. ")
+        append("Nutze keine künstlichen Überschriften oder Listen, außer der Ausgangstext oder die gewählte Aufgabe verlangt sie ausdrücklich. ")
         append(style.instruction)
 '''
 if old not in s:
