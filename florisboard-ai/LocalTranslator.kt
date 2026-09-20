@@ -19,7 +19,8 @@ import kotlinx.coroutines.withContext
 
 /**
  * Hybride Übersetzung:
- * - Google Cloud Translation für höhere Qualität und größere Sprachauswahl.
+ * - Standard: der bereits konfigurierte KI Anbieter und dessen Modell.
+ * - Optional: Google Cloud Translation.
  * - ML Kit lokal als Offline- und Datenschutz-Fallback.
  */
 class LocalTranslator(private val context: Context) {
@@ -63,6 +64,7 @@ class LocalTranslator(private val context: Context) {
 
         val mode = TranslationBackend.mode(appContext)
         val cloudKey = TranslationBackend.apiKey(appContext)
+        val aiReady = AiBackend.hasApiKey(appContext)
 
         when {
             incognito -> {
@@ -77,10 +79,64 @@ class LocalTranslator(private val context: Context) {
                     translateCloud(target, targetCode, targetName, cloudKey, allowLocalFallback = false)
                 }
             }
+            mode == TranslationMode.AI -> {
+                if (!aiReady) {
+                    toast("Bitte zuerst einen KI Anbieter und API Schlüssel einrichten")
+                } else {
+                    translateAi(target, targetCode, targetName, cloudKey, allowFallback = false)
+                }
+            }
+            aiReady -> {
+                translateAi(target, targetCode, targetName, cloudKey, allowFallback = true)
+            }
             cloudKey.isNotBlank() -> {
                 translateCloud(target, targetCode, targetName, cloudKey, allowLocalFallback = true)
             }
             else -> translateLocal(target, targetCode, targetName)
+        }
+    }
+
+    private fun translateAi(
+        target: Target,
+        targetCode: String,
+        targetName: String,
+        cloudKey: String,
+        allowFallback: Boolean,
+    ) {
+        val providerName = AiBackend.providerDisplayName(appContext)
+        toast("Übersetze mit $providerName KI nach $targetName …")
+        scope.launch {
+            try {
+                val translated = AiBackend.translate(
+                    context = appContext,
+                    text = target.text,
+                    targetLanguageName = targetName,
+                    targetLanguageCode = targetCode,
+                )
+                withContext(Dispatchers.Main) {
+                    applyIfStillCurrent(target, translated, "Mit $providerName KI übersetzt")
+                }
+            } catch (e: Throwable) {
+                if (allowFallback) {
+                    withContext(Dispatchers.Main) {
+                        if (cloudKey.isNotBlank()) {
+                            toast("KI Übersetzung nicht verfügbar. Google Fallback startet.")
+                            translateCloud(
+                                target = target,
+                                targetCode = targetCode,
+                                targetName = targetName,
+                                apiKey = cloudKey,
+                                allowLocalFallback = true,
+                            )
+                        } else {
+                            toast("KI Übersetzung nicht verfügbar. Offline Fallback startet.")
+                            translateLocal(target, targetCode, targetName)
+                        }
+                    }
+                } else {
+                    toast(e.message ?: "KI Übersetzung fehlgeschlagen")
+                }
+            }
         }
     }
 
@@ -123,7 +179,7 @@ class LocalTranslator(private val context: Context) {
 
         val targetLanguage = TranslateLanguage.fromLanguageTag(targetCode)
         if (targetLanguage == null) {
-            toast("Diese Sprache ist offline nicht verfügbar. Für mehr Sprachen Google Cloud Translation einrichten.")
+            toast("Diese Sprache ist offline nicht verfügbar. Nutze KI oder Google Cloud für diese Sprache.")
             return
         }
 
