@@ -20,7 +20,7 @@ about = SRC / "kotlin/dev/patrickgold/florisboard/app/settings/about/AboutScreen
 text = about.read_text(encoding="utf-8")
 text = text.replace('contentDescription = "FlorisBoard app icon",', 'contentDescription = "KI Tastatur App Symbol",')
 needle = '''            Text(\n                text = stringRes(R.string.floris_app_name),\n                fontSize = 24.sp,\n                fontWeight = FontWeight.SemiBold,\n                modifier = Modifier.padding(top = 16.dp),\n            )\n'''
-replacement = needle + '''            Text(\n                text = "Beta v3",\n                fontSize = 14.sp,\n                fontWeight = FontWeight.Medium,\n                modifier = Modifier.padding(top = 4.dp),\n            )\n            Text(\n                text = stringRes(R.string.ki_tastatur__based_on_florisboard),\n                fontSize = 13.sp,\n                modifier = Modifier.padding(top = 2.dp),\n            )\n'''
+replacement = needle + '''            Text(\n                text = "Beta v4",\n                fontSize = 14.sp,\n                fontWeight = FontWeight.Medium,\n                modifier = Modifier.padding(top = 4.dp),\n            )\n            Text(\n                text = stringRes(R.string.ki_tastatur__based_on_florisboard),\n                fontSize = 13.sp,\n                modifier = Modifier.padding(top = 2.dp),\n            )\n'''
 if needle not in text:
     raise SystemExit("AboutScreen branding marker not found")
 text = text.replace(needle, replacement, 1)
@@ -40,4 +40,4 @@ adaptive = '''<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:andro
 for name in ["ic_app_icon_stable.xml", "ic_app_icon_stable_round.xml"]:
     (RES / "mipmap-anydpi-v26" / name).write_text(adaptive, encoding="utf-8")
 
-print("Visible branding changed to KI Tastatur Beta v3 with new AI keyboard icon; FlorisBoard kept only as attribution/source reference")
+print("Visible branding changed to KI Tastatur Beta v4 with new AI keyboard icon; FlorisBoard kept only as attribution/source reference")
