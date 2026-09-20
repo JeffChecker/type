@@ -107,7 +107,7 @@ fun AiToolbar() {
         )
 
         AiToolbarButton(
-            text = "Übersetzen",
+            text = "Mit Google übersetzen",
             onClick = { trigger(TextKeyData.AI_TRANSLATE) },
         )
 
