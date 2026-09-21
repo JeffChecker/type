@@ -385,7 +385,8 @@ object AiBackend {
         var lastError: AiHttpException? = null
 
         for (attempt in 0 until 6) {
-            val model = candidates.getOrNull(attempt) ?: run {
+            var model = candidates.getOrNull(attempt)
+            if (model == null) {
                 val loaded = modelList ?: try {
                     listModels(AiProvider.OPENAI, apiKey).also { modelList = it }
                 } catch (e: AiHttpException) {
@@ -396,8 +397,9 @@ object AiBackend {
                     .map { it.id }
                     .filter { it !in candidates }
                     .forEach { candidates += it }
-                candidates.getOrNull(attempt) ?: break
+                model = candidates.getOrNull(attempt)
             }
+            if (model == null) break
 
             try {
                 val result = requestOpenAi(apiKey, model, instructions, text, maxTokens)
