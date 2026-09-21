@@ -6,7 +6,7 @@
 <p align="center"><strong>Schreiben. Verstehen. Verbessern. Direkt auf der Tastatur.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v4"><strong>Beta v4 herunterladen</strong></a>
+  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v5"><strong>Beta v5 herunterladen</strong></a>
 </p>
 
 ## Deine Tastatur kann jetzt mehr als tippen
@@ -39,7 +39,7 @@ Aus einer groben Idee wird ein klarer Prompt. **Prompt+** erkennt Ziel, Kontext,
 
 Texte können direkt aus der Tastatur übersetzt werden. Die Ausgangssprache wird automatisch erkannt. Als Ziel wird die aktuell aktive Tastatursprache verwendet.
 
-Die Übersetzung arbeitet in Beta v4 bevorzugt mit dem **bereits eingerichteten KI Anbieter und demselben API Schlüssel**, der auch für Korrigieren und Stil verwendet wird. Ein zweiter Schlüssel ist dafür nicht nötig. Die KI erkennt die Ausgangssprache selbst und übersetzt kontextbezogen in die gewählte Zielsprache. Optional kann Google Cloud Translation als Fallback eingerichtet werden; im Inkognito Modus bleibt die Übersetzung lokal über **Google ML Kit**.
+Die Übersetzung arbeitet in Beta v5 bevorzugt mit dem **bereits eingerichteten KI Anbieter und demselben API Schlüssel**, der auch für Korrigieren und Stil verwendet wird. Ein zweiter Schlüssel ist dafür nicht nötig. Die KI erkennt die Ausgangssprache selbst und übersetzt kontextbezogen in die gewählte Zielsprache. Optional kann Google Cloud Translation als Fallback eingerichtet werden; im Inkognito Modus bleibt die Übersetzung lokal über **Google ML Kit**.
 
 ### Freie Wahl des KI Anbieters
 
@@ -64,7 +64,7 @@ API Schlüssel werden nicht in der App mitgeliefert und nicht im öffentlichen Q
 
 ## Installation
 
-1. Lade **KI Tastatur Beta v4** aus den GitHub Releases herunter.
+1. Lade **KI Tastatur Beta v5** aus den GitHub Releases herunter.
 2. Installiere die APK.
 3. Aktiviere KI Tastatur in den Android Einstellungen.
 4. Lege sie als Eingabemethode fest.
@@ -74,7 +74,7 @@ API Schlüssel werden nicht in der App mitgeliefert und nicht im öffentlichen Q
 8. Lade die verfügbaren Modelle und wähle eines aus oder nutze `auto`.
 9. Teste die Verbindung.
 
-> Beta v4 ist eine Testversion. Schwerpunkt ist die neue KI Übersetzung über den bereits eingerichteten Anbieter, mit optionalem Google Fallback und lokalem ML Kit im Inkognito Modus.
+> Beta v5 ist eine Testversion. Schwerpunkt ist die robustere OpenAI Anbindung mit genauer Fehlerdiagnose, aktueller Modellwahl und automatischem Modell Fallback.
 
 ## Technische Basis
 
@@ -83,3 +83,10 @@ KI Tastatur basiert auf dem Open Source Projekt **FlorisBoard** und wird auf Gru
 Originalprojekt: https://github.com/florisboard/florisboard
 
 Die sichtbare Produktbezeichnung dieser Variante ist **KI Tastatur**. FlorisBoard bleibt als technische Herkunft und Lizenzquelle genannt.
+
+
+## OpenAI in Beta v5
+
+Die OpenAI Anbindung wurde robuster gemacht. Die App prüft den API Schlüssel gegen die aktuelle Modellliste, bevorzugt aktuelle Textmodelle und testet bei einem abgelehnten Modell automatisch weitere verfügbare Modelle. OpenAI Fehler werden nicht mehr pauschal zusammengefasst, sondern unterscheiden unter anderem ungültigen Schlüssel, fehlende Berechtigung, fehlendes API Guthaben, Rate Limit und Modellfehler.
+
+Für Korrigieren, Stil und KI Übersetzen gilt derselbe Fallback.
