@@ -113,7 +113,22 @@ object AiBackend {
         val key = apiKey(context, provider)
         if (key.isBlank()) throw AiException("Kein ${provider.displayName} API Schlüssel eingerichtet")
         val model = resolveModel(context, provider, key)
-        return requestInternal(provider, key, model, style, text, voiceLike)
+        return if (provider == AiProvider.OPENAI) {
+            requestOpenAiWithFallback(
+                context = context,
+                apiKey = key,
+                preferredModel = model,
+                instructions = prompt(style, voiceLike),
+                text = text,
+                maxTokens = 700,
+            )
+        } else {
+            try {
+                requestInternal(provider, key, model, style, text, voiceLike)
+            } catch (e: AiHttpException) {
+                throw humanReadableHttpError(e, model)
+            }
+        }
     }
 
     suspend fun translate(
@@ -127,18 +142,33 @@ object AiBackend {
         if (key.isBlank()) throw AiException("Kein ${provider.displayName} API Schlüssel eingerichtet")
         val model = resolveModel(context, provider, key)
         val instructions = translationPrompt(targetLanguageName, targetLanguageCode)
-        return when (provider) {
-            AiProvider.OPENAI -> requestOpenAi(key, model, instructions, text, maxTokens = 2_500)
-            AiProvider.GEMINI -> requestGemini(key, model, instructions, text, AiStyle.CORRECT, maxTokens = 2_500)
-            AiProvider.CLAUDE -> requestClaude(key, model, instructions, text, maxTokens = 2_500)
-            AiProvider.GROQ -> requestGroq(key, model, instructions, text, AiStyle.CORRECT, maxTokens = 2_500)
+        return try {
+            when (provider) {
+                AiProvider.OPENAI -> requestOpenAiWithFallback(
+                    context = context,
+                    apiKey = key,
+                    preferredModel = model,
+                    instructions = instructions,
+                    text = text,
+                    maxTokens = 2_500,
+                )
+                AiProvider.GEMINI -> requestGemini(key, model, instructions, text, AiStyle.CORRECT, maxTokens = 2_500)
+                AiProvider.CLAUDE -> requestClaude(key, model, instructions, text, maxTokens = 2_500)
+                AiProvider.GROQ -> requestGroq(key, model, instructions, text, AiStyle.CORRECT, maxTokens = 2_500)
+            }
+        } catch (e: AiHttpException) {
+            throw humanReadableHttpError(e, model)
         }
     }
 
     suspend fun testConnection(provider: AiProvider, apiKey: String, modelSetting: String): String {
         if (apiKey.isBlank()) throw AiException("Bitte zuerst einen ${provider.displayName} API Schlüssel eintragen.")
         val key = apiKey.trim()
-        val models = listModels(provider, key)
+        val models = try {
+            listModels(provider, key)
+        } catch (e: AiHttpException) {
+            throw humanReadableHttpError(e)
+        }
         val requested = if (modelSetting.isBlank() || modelSetting == AUTO_MODEL) {
             null
         } else {
@@ -340,6 +370,58 @@ object AiBackend {
         AiProvider.GEMINI -> requestGemini(apiKey, model, prompt(style, voiceLike), text, style)
         AiProvider.CLAUDE -> requestClaude(apiKey, model, prompt(style, voiceLike), text)
         AiProvider.GROQ -> requestGroq(apiKey, model, prompt(style, voiceLike), text, style)
+    }
+
+    private suspend fun requestOpenAiWithFallback(
+        context: Context,
+        apiKey: String,
+        preferredModel: String,
+        instructions: String,
+        text: String,
+        maxTokens: Int,
+    ): String {
+        val candidates = mutableListOf(preferredModel)
+        var modelList: List<AiModel>? = null
+        var lastError: AiHttpException? = null
+
+        for (attempt in 0 until 6) {
+            val model = candidates.getOrNull(attempt) ?: run {
+                val loaded = modelList ?: try {
+                    listModels(AiProvider.OPENAI, apiKey).also { modelList = it }
+                } catch (e: AiHttpException) {
+                    if (lastError != null) throw humanReadableHttpError(lastError!!, preferredModel)
+                    throw humanReadableHttpError(e)
+                }
+                loaded.sortedByDescending { automaticScore(AiProvider.OPENAI, it.id.lowercase()) }
+                    .map { it.id }
+                    .filter { it !in candidates }
+                    .forEach { candidates += it }
+                candidates.getOrNull(attempt) ?: break
+            }
+
+            try {
+                val result = requestOpenAi(apiKey, model, instructions, text, maxTokens)
+                if (model != preferredModel && modelSetting(context, AiProvider.OPENAI) == AUTO_MODEL) {
+                    context.getSharedPreferences(AiAssistant.PREFS_NAME, Context.MODE_PRIVATE)
+                        .edit()
+                        .putString("auto_model_openai", model)
+                        .putLong("auto_model_time_openai", System.currentTimeMillis())
+                        .apply()
+                }
+                return result
+            } catch (e: AiHttpException) {
+                lastError = e
+                if (e.statusCode == 401 || e.statusCode == 403 || e.statusCode == 429) {
+                    throw humanReadableHttpError(e, model)
+                }
+                if (e.statusCode !in listOf(400, 404, 422)) {
+                    throw humanReadableHttpError(e, model)
+                }
+            }
+        }
+
+        throw lastError?.let { humanReadableHttpError(it, preferredModel) }
+            ?: AiException("OpenAI hat kein nutzbares Textmodell geliefert.")
     }
 
     private suspend fun requestOpenAi(apiKey: String, model: String, instructions: String, text: String, maxTokens: Int = 700): String = withContext(Dispatchers.IO) {
