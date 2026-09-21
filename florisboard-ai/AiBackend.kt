@@ -26,6 +26,14 @@ enum class AiProvider(val id: String, val displayName: String) {
 
 data class AiModel(val id: String, val displayName: String = id)
 
+private class AiHttpException(
+    val provider: AiProvider,
+    val statusCode: Int,
+    val detail: String,
+    val errorType: String? = null,
+    val errorCode: String? = null,
+) : Exception(detail)
+
 object AiBackend {
     const val KEY_PROVIDER = "provider"
     const val KEY_OPENAI_API_KEY = "openai_api_key"
@@ -129,12 +137,60 @@ object AiBackend {
 
     suspend fun testConnection(provider: AiProvider, apiKey: String, modelSetting: String): String {
         if (apiKey.isBlank()) throw AiException("Bitte zuerst einen ${provider.displayName} API Schlüssel eintragen.")
-        val model = if (modelSetting.isBlank() || modelSetting == AUTO_MODEL) {
-            chooseAutomaticModel(provider, listModels(provider, apiKey)).id
+        val key = apiKey.trim()
+        val models = listModels(provider, key)
+        val requested = if (modelSetting.isBlank() || modelSetting == AUTO_MODEL) {
+            null
         } else {
-            modelSetting
+            modelSetting.trim()
         }
-        return requestInternal(provider, apiKey.trim(), model, AiStyle.CORRECT, "Das ist ain kurzer Test.", false)
+
+        if (provider != AiProvider.OPENAI) {
+            val model = requested ?: chooseAutomaticModel(provider, models).id
+            return requestInternal(provider, key, model, AiStyle.CORRECT, "Das ist ain kurzer Test.", false)
+        }
+
+        val candidates = buildList {
+            if (!requested.isNullOrBlank()) {
+                models.firstOrNull { it.id == requested }?.let { add(it) }
+                if (none { it.id == requested }) add(AiModel(requested))
+            }
+            models.sortedByDescending { automaticScore(AiProvider.OPENAI, it.id.lowercase()) }
+                .forEach { candidate ->
+                    if (none { it.id == candidate.id }) add(candidate)
+                }
+        }.take(6)
+
+        var lastError: Throwable? = null
+        for (candidate in candidates) {
+            try {
+                val result = requestOpenAi(
+                    apiKey = key,
+                    model = candidate.id,
+                    instructions = prompt(AiStyle.CORRECT, false),
+                    text = "Das ist ain kurzer Test.",
+                    maxTokens = 300,
+                )
+                return "${candidate.id}: $result"
+            } catch (e: AiHttpException) {
+                lastError = e
+                if (e.statusCode == 401 || e.statusCode == 403 || e.statusCode == 429) {
+                    throw humanReadableHttpError(e, candidate.id)
+                }
+                if (e.statusCode !in listOf(400, 404, 422)) {
+                    throw humanReadableHttpError(e, candidate.id)
+                }
+            } catch (e: Throwable) {
+                lastError = e
+                break
+            }
+        }
+
+        when (val error = lastError) {
+            is AiHttpException -> throw humanReadableHttpError(error, requested)
+            null -> throw AiException("OpenAI hat kein nutzbares Textmodell geliefert.")
+            else -> throw AiException(error.message ?: "OpenAI Verbindungstest fehlgeschlagen.")
+        }
     }
 
     suspend fun listModels(provider: AiProvider, apiKey: String): List<AiModel> = withContext(Dispatchers.IO) {
@@ -201,11 +257,17 @@ object AiBackend {
 
     private fun automaticScore(provider: AiProvider, id: String): Int = when (provider) {
         AiProvider.OPENAI -> when {
-            "luna" in id -> 100
-            "nano" in id -> 95
-            "mini" in id -> 90
-            id.startsWith("gpt-5") -> 80
-            id.startsWith("gpt-") -> 70
+            id == "gpt-5.6-luna" -> 140
+            id == "gpt-5.6-terra" -> 130
+            id == "gpt-5.6" || id == "gpt-5.6-sol" -> 120
+            id.startsWith("gpt-5.6") && "luna" in id -> 115
+            "luna" in id -> 110
+            id.startsWith("gpt-5") && "mini" in id -> 100
+            id.startsWith("gpt-5") && "nano" in id -> 95
+            id.startsWith("gpt-5") -> 90
+            id.startsWith("gpt-4.1") -> 80
+            id.startsWith("gpt-4o") -> 70
+            id.startsWith("gpt-") -> 60
             else -> 20
         }
         AiProvider.GEMINI -> when {
@@ -287,18 +349,23 @@ object AiBackend {
             put("input", text)
             put("max_output_tokens", maxTokens)
             put("store", false)
+            if (model.startsWith("gpt-5.6")) {
+                put("reasoning", buildJsonObject { put("effort", "none") })
+            }
         }
         val (code, response) = post(OPENAI_RESPONSES, AiProvider.OPENAI, apiKey, body.toString())
         checkError(AiProvider.OPENAI, code, response)
         val root = Json.parseToJsonElement(response).jsonObject
-        val answer = root["output"]?.jsonArray?.asSequence()?.mapNotNull { item ->
+        val topLevelText = runCatching { root["output_text"]?.jsonPrimitive?.content }.getOrNull().orEmpty()
+        val nestedText = root["output"]?.jsonArray?.asSequence()?.mapNotNull { item ->
             val content = runCatching { item.jsonObject["content"]?.jsonArray }.getOrNull() ?: return@mapNotNull null
             content.asSequence().mapNotNull { part ->
                 val obj = runCatching { part.jsonObject }.getOrNull() ?: return@mapNotNull null
                 if (obj["type"]?.jsonPrimitive?.content == "output_text") obj["text"]?.jsonPrimitive?.content else null
             }.firstOrNull()
         }?.firstOrNull().orEmpty()
-        clean(answer).ifBlank { throw AiException("OpenAI hat keinen Text zurückgegeben.") }
+        val answer = topLevelText.ifBlank { nestedText }
+        clean(answer).ifBlank { throw AiException("OpenAI hat die Anfrage angenommen, aber keinen Text zurückgegeben.") }
     }
 
     private suspend fun requestGemini(apiKey: String, model: String, systemPrompt: String, text: String, style: AiStyle, maxTokens: Int = 700): String = withContext(Dispatchers.IO) {
@@ -415,14 +482,38 @@ object AiBackend {
 
     private fun checkError(provider: AiProvider, code: Int, response: String) {
         if (code in 200..299) return
-        val detail = runCatching {
-            Json.parseToJsonElement(response).jsonObject["error"]?.jsonObject?.get("message")?.jsonPrimitive?.content
+        val errorObj = runCatching {
+            Json.parseToJsonElement(response).jsonObject["error"]?.jsonObject
         }.getOrNull()
-        when (code) {
-            401, 403 -> throw AiException("Der ${provider.displayName} API Schlüssel ist ungültig oder nicht freigeschaltet.")
-            429 -> throw AiException("${provider.displayName} Limit oder Guthaben erreicht. Bitte API Konto prüfen.")
-            else -> throw AiException(detail?.takeIf { it.isNotBlank() } ?: "${provider.displayName} Anfrage fehlgeschlagen (HTTP $code).")
+        val detail = errorObj?.get("message")?.jsonPrimitive?.content
+            ?.takeIf { it.isNotBlank() }
+            ?: "${provider.displayName} Anfrage fehlgeschlagen (HTTP $code)."
+        val type = errorObj?.get("type")?.jsonPrimitive?.content
+        val errorCode = errorObj?.get("code")?.jsonPrimitive?.content
+        throw AiHttpException(provider, code, detail, type, errorCode)
+    }
+
+    private fun humanReadableHttpError(error: AiHttpException, model: String? = null): AiException {
+        val providerName = error.provider.displayName
+        val modelPart = model?.takeIf { it.isNotBlank() }?.let { " Modell: $it." }.orEmpty()
+        val detail = error.detail.trim().take(500)
+        val message = when {
+            error.statusCode == 401 ->
+                "$providerName lehnt den API Schlüssel ab. Bitte einen aktuellen API Schlüssel vom API Dashboard verwenden. $detail"
+            error.statusCode == 403 ->
+                "$providerName verweigert den Zugriff. Prüfe Projekt, Berechtigungen und Modellfreigabe.$modelPart $detail"
+            error.statusCode == 429 && (error.errorCode == "insufficient_quota" || "quota" in detail.lowercase() || "billing" in detail.lowercase()) ->
+                "$providerName API Guthaben oder Abrechnung fehlt bzw. das Kontingent ist erreicht. ChatGPT Plus enthält kein API Guthaben. $detail"
+            error.statusCode == 429 ->
+                "$providerName Rate Limit erreicht. Bitte kurz warten und erneut testen. $detail"
+            error.statusCode == 404 ->
+                "$providerName Modell oder Endpunkt wurde nicht gefunden.$modelPart $detail"
+            error.statusCode == 400 || error.statusCode == 422 ->
+                "$providerName hat die Anfrage abgelehnt.$modelPart $detail"
+            else ->
+                "$providerName Anfrage fehlgeschlagen (HTTP ${error.statusCode}).$modelPart $detail"
         }
+        return AiException(message)
     }
 
     private fun clean(value: String): String {
