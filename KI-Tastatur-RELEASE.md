@@ -1,4 +1,4 @@
-# KI Tastatur Beta v4
+# KI Tastatur Beta v5
 
 **Die Android Tastatur mit KI direkt beim Schreiben.**
 
@@ -10,7 +10,7 @@ Kein Kopieren in andere Apps. Kein automatisches Eingreifen während du noch sch
 
 ### Texte verstehen statt nur Rechtschreibung prüfen
 
-Mit **KI korrigieren** wird nicht nur auf Rechtschreibung und Grammatik geschaut. Beta v4 verwendet eine robuste Fallback Logik: markierter Text, aktueller Absatz, aktueller Satz oder ein Textblock vor dem Cursor. Dadurch funktioniert die Korrektur zuverlässiger in unterschiedlichen Apps und Eingabefeldern.
+Mit **KI korrigieren** wird nicht nur auf Rechtschreibung und Grammatik geschaut. Beta v5 verwendet eine robuste Fallback Logik: markierter Text, aktueller Absatz, aktueller Satz oder ein Textblock vor dem Cursor. Dadurch funktioniert die Korrektur zuverlässiger in unterschiedlichen Apps und Eingabefeldern.
 
 Die Korrektur startet ausschließlich auf Knopfdruck. Eigene Satzzeichen wie `!`, `?`, `?!`, `!!` oder `…` sollen erhalten bleiben.
 
@@ -28,7 +28,7 @@ Du hast eine grobe Idee, aber noch keinen guten Prompt? **Prompt+** macht daraus
 
 ### Übersetzen direkt auf dem Gerät
 
-Beta v4 übersetzt standardmäßig mit dem **bereits eingerichteten KI Anbieter**. OpenAI, Gemini, Claude oder Groq verwenden denselben API Schlüssel und dasselbe ausgewählte Modell wie die übrigen KI Funktionen. Ein zusätzlicher Übersetzungs Schlüssel ist nicht erforderlich. Die Ausgangssprache wird automatisch erkannt und der Text wird mit einem strengen Übersetzungs Prompt sinngenau, vollständig und ohne zusätzliche Inhalte übertragen.
+Beta v5 übersetzt standardmäßig mit dem **bereits eingerichteten KI Anbieter**. OpenAI, Gemini, Claude oder Groq verwenden denselben API Schlüssel und dasselbe ausgewählte Modell wie die übrigen KI Funktionen. Ein zusätzlicher Übersetzungs Schlüssel ist nicht erforderlich. Die Ausgangssprache wird automatisch erkannt und der Text wird mit einem strengen Übersetzungs Prompt sinngenau, vollständig und ohne zusätzliche Inhalte übertragen.
 
 Die Zielsprache kann der aktiven Tastatursprache folgen oder aus einer großen Sprachliste gewählt werden. Optional kann Google Cloud Translation als Fallback hinterlegt werden. Im Inkognito Modus wird ausschließlich lokal über **Google ML Kit** übersetzt.
 
@@ -55,7 +55,7 @@ Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil, Pr
 
 ## Installation
 
-1. **KI-Tastatur-Beta-v4.apk** herunterladen.
+1. **KI-Tastatur-Beta-v5.apk** herunterladen.
 2. APK installieren.
 3. KI Tastatur in den Android Einstellungen aktivieren.
 4. Als Eingabemethode auswählen.
@@ -64,9 +64,26 @@ Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil, Pr
 7. Modelle laden und eines auswählen oder `auto` verwenden.
 8. Verbindung testen.
 
-## Beta v4
 
-Diese Beta konzentriert sich auf kontextbezogene KI Übersetzungen mit dem bereits vorhandenen API Schlüssel, eine große Sprachauswahl, optionalen Google Fallback und lokale Offline Übersetzung. Weitere Testversionen folgen fortlaufend als **Beta v5, Beta v6** usw.
+
+### OpenAI Verbindung verbessert
+
+Beta v5 prüft OpenAI nicht mehr nur mit einem einzigen automatisch gewählten Modell. Wenn ein Modell vom Projekt oder Endpunkt abgelehnt wird, testet die App weitere Modelle aus der vom OpenAI Konto gelieferten Modellliste.
+
+Fehlermeldungen unterscheiden jetzt klarer zwischen:
+
+- ungültigem API Schlüssel
+- fehlender Projekt oder Modellberechtigung
+- fehlendem API Guthaben bzw. Kontingent
+- Rate Limit
+- nicht verfügbarem Modell
+- ungültiger API Anfrage
+
+Dadurch lässt sich direkt in der App erkennen, warum OpenAI nicht funktioniert.
+
+## Beta v5
+
+Diese Beta konzentriert sich auf eine robustere OpenAI Verbindung. API Fehler werden genauer angezeigt, aktuelle OpenAI Textmodelle werden bevorzugt und bei Modellfehlern werden automatisch weitere tatsächlich verfügbare Modelle getestet. Das gilt für Verbindungstest, Korrigieren, Stil und KI Übersetzen. Weitere Testversionen folgen fortlaufend als **Beta v6, Beta v7** usw.
 
 ## Open Source Grundlage
 
