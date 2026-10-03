@@ -4,15 +4,6 @@ permissions:
   contents: write
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'florisboard-de/**'
-      - 'florisboard-ai/**'
-      - 'assets/**'
-      - 'README.md'
-      - 'KI-Tastatur-RELEASE.md'
-      - '.github/workflows/ki-tastatur-beta-v5.yml'
   workflow_dispatch:
 
 concurrency:
