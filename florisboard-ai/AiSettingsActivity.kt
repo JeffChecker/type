@@ -55,6 +55,8 @@ class AiSettingsActivity : ComponentActivity() {
                     ?: AiBackend.AUTO_MODEL
             )
         }
+        var chatGptConnected by remember { mutableStateOf(ChatGptPlanAuth.isConnected(this)) }
+        var useChatGptPlan by remember { mutableStateOf(ChatGptPlanAuth.shouldUsePlan(this)) }
         var status by remember { mutableStateOf("") }
         var savedProviderId by remember { mutableStateOf(providerId) }
         var savedModelId by remember {
@@ -95,7 +97,7 @@ class AiSettingsActivity : ComponentActivity() {
         }
 
         fun setCurrentModel(value: String) {
-            val v = value.ifBlank { AiBackend.AUTO_MODEL }
+            val v = value.trim().ifBlank { AiBackend.AUTO_MODEL }
             when (provider) {
                 AiProvider.OPENAI -> openAiModel = v
                 AiProvider.GEMINI -> geminiModel = v
@@ -141,6 +143,10 @@ class AiSettingsActivity : ComponentActivity() {
             }
         }
 
+        fun credentialReady(): Boolean =
+            (provider == AiProvider.OPENAI && ChatGptPlanAuth.shouldUsePlan(this)) ||
+                currentKey().trim().isNotBlank()
+
         val currentSelectionIsSaved = savedProviderId == providerId && savedModelId == currentModel()
 
         Column(
@@ -148,12 +154,12 @@ class AiSettingsActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text("KI Schreibassistent", style = MaterialTheme.typography.headlineSmall)
-            Text("Die KI verändert deinen Text nur noch, wenn du selbst eine Taste in der Smartbar drückst. Es gibt keine zeitgesteuerte Autokorrektur mehr.")
+            Text("Die KI verändert deinen Text nur, wenn du selbst eine KI Funktion auslöst. Es gibt keine zeitgesteuerte Cloud Korrektur.")
 
             Text("Bedienung", style = MaterialTheme.typography.titleMedium)
-            Text("KI korrigieren: prüft den aktuellen Absatz oder markierten Text auf Sinn, Sprache, Diktatfehler und Zeichensetzung. Deine eigenen Satzendzeichen wie !, ?, ?! oder !! bleiben erhalten.")
-            Text("Stil: öffnet ein Auswahlmenü mit Sarkastisch, Flirtend, Verführerisch, Stilvoll, Geschäftlich, Professionell, Freundlich, Persönlich, Du-Form, Sie-Form, Locker, Humorvoll, Direkt, Kurz und Einfach.")
-            Text("Prompt+: verbessert deinen Rohtext zu einem klaren KI Prompt, ohne neue Fakten zu erfinden.")
+            Text("KI korrigieren: liest den vollständigen Absatz oder die Markierung, versteht zuerst den Zusammenhang und prüft danach jeden Satz auf Sinn, Logik, Grammatik, Satzbau, Diktatfehler und Zeichensetzung. Unnatürliche Sätze dürfen vollständig neu formuliert werden, ohne Fakten zu verändern.")
+            Text("Stil: jeder Stil prüft zuerst Sinn und Sprache. Danach wird der Text passend zu Humorvoll, Persönlich, Geschäftlich, Professionell, Freundlich, Locker, Sarkastisch und den weiteren Stilen natürlich neu formuliert.")
+            Text("Prompt+: macht aus einem Rohtext einen klaren KI Arbeitsauftrag, ohne fehlende Fakten zu erfinden.")
 
             Text("KI Anbieter", style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -165,11 +171,87 @@ class AiSettingsActivity : ComponentActivity() {
                 Button(onClick = { chooseProvider(AiProvider.GROQ) }) { Text(if (provider == AiProvider.GROQ) "Groq ✓" else "Groq") }
             }
 
+            if (provider == AiProvider.OPENAI) {
+                Text("ChatGPT Konto", style = MaterialTheme.typography.titleMedium)
+                if (chatGptConnected) {
+                    Text("✓ Verbunden: " + ChatGptPlanAuth.accountLabel(this@AiSettingsActivity))
+                    Text(
+                        if (useChatGptPlan) {
+                            "OpenAI Anfragen werden über die freigegebene ChatGPT Plan Nutzung gesendet."
+                        } else {
+                            "Das ChatGPT Konto bleibt verbunden. Aktuell wird der eigene OpenAI API Schlüssel verwendet."
+                        }
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = {
+                            ChatGptPlanAuth.setUsePlan(this@AiSettingsActivity, true)
+                            useChatGptPlan = ChatGptPlanAuth.shouldUsePlan(this@AiSettingsActivity)
+                            models = emptyList()
+                            status = if (useChatGptPlan) {
+                                "ChatGPT Plan ist aktiv"
+                            } else {
+                                "Die Plan Freigabe fehlt. Bitte ChatGPT erneut verbinden und die Nutzung freigeben."
+                            }
+                        }) { Text("ChatGPT Plan") }
+                        Button(onClick = {
+                            ChatGptPlanAuth.setUsePlan(this@AiSettingsActivity, false)
+                            useChatGptPlan = false
+                            models = emptyList()
+                            status = "OpenAI API Schlüssel ist aktiv"
+                        }) { Text("API Schlüssel") }
+                    }
+                    Button(
+                        onClick = {
+                            status = "ChatGPT wird abgemeldet …"
+                            scope.launch {
+                                status = try {
+                                    ChatGptPlanAuth.signOut(this@AiSettingsActivity).also {
+                                        chatGptConnected = false
+                                        useChatGptPlan = false
+                                        models = emptyList()
+                                    }
+                                } catch (e: Throwable) {
+                                    e.message ?: "Abmeldung fehlgeschlagen"
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("ChatGPT abmelden") }
+                } else {
+                    Text("Mit ChatGPT anmelden nutzt den offiziellen OpenAI Anmeldeablauf. Für diese Zugangsart muss kein OpenAI API Schlüssel in der Tastatur hinterlegt werden.")
+                    Button(
+                        onClick = {
+                            status = "ChatGPT Anmeldung wurde im Browser geöffnet …"
+                            scope.launch {
+                                status = try {
+                                    ChatGptPlanAuth.signIn(this@AiSettingsActivity).also {
+                                        chatGptConnected = true
+                                        useChatGptPlan = ChatGptPlanAuth.shouldUsePlan(this@AiSettingsActivity)
+                                        models = emptyList()
+                                    }
+                                } catch (e: Throwable) {
+                                    e.message ?: "ChatGPT Anmeldung fehlgeschlagen"
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Mit ChatGPT anmelden") }
+                }
+            }
+
             OutlinedTextField(
                 value = currentKey(),
                 onValueChange = { setCurrentKey(it) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("${provider.displayName} API Schlüssel") },
+                label = {
+                    Text(
+                        if (provider == AiProvider.OPENAI) {
+                            "OpenAI API Schlüssel (optional)"
+                        } else {
+                            "${provider.displayName} API Schlüssel"
+                        }
+                    )
+                },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
             )
@@ -177,15 +259,15 @@ class AiSettingsActivity : ComponentActivity() {
             Button(
                 onClick = { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AiBackend.apiKeyPage(provider)))) },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("API Schlüssel Seite öffnen") }
+            ) { Text(if (provider == AiProvider.OPENAI) "OpenAI API Schlüssel Seite öffnen" else "API Schlüssel Seite öffnen") }
 
             Text("Modell", style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(
                 value = currentModel(),
                 onValueChange = { setCurrentModel(it) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Modell-ID") },
-                supportingText = { Text("'auto' = Modell wird aus der aktuellen API Modellliste automatisch gewählt") },
+                label = { Text("Modell ID") },
+                supportingText = { Text("auto = Modell wird aus der aktuell verfügbaren Modellliste gewählt") },
                 singleLine = true,
             )
 
@@ -222,10 +304,14 @@ class AiSettingsActivity : ComponentActivity() {
                     status = "Speichern fehlgeschlagen"
                     return@Button
                 }
+                if (!credentialReady()) {
+                    status = AiBackend.credentialHint(this@AiSettingsActivity)
+                    return@Button
+                }
                 status = "Modelle werden über ${provider.displayName} geladen …"
                 scope.launch {
                     status = try {
-                        models = AiBackend.listModels(provider, currentKey().trim())
+                        models = AiBackend.listModels(this@AiSettingsActivity, provider, currentKey().trim())
                         val recommended = AiBackend.chooseAutomaticModel(provider, models)
                         "${models.size} Textmodelle gefunden. Automatisch würde ${recommended.displayName} gewählt."
                     } catch (e: Throwable) {
@@ -252,7 +338,7 @@ class AiSettingsActivity : ComponentActivity() {
                         Text("✓ Dieses Modell ist gespeichert und wird verwendet.")
                     }
                 }
-                if (models.size > 20) Text("Weitere Modelle können über ihre Modell-ID eingetragen werden.")
+                if (models.size > 20) Text("Weitere Modelle können über ihre Modell ID eingetragen werden.")
             }
 
             Button(onClick = {
@@ -260,10 +346,19 @@ class AiSettingsActivity : ComponentActivity() {
                     status = "Speichern fehlgeschlagen"
                     return@Button
                 }
+                if (!credentialReady()) {
+                    status = AiBackend.credentialHint(this@AiSettingsActivity)
+                    return@Button
+                }
                 status = "Verbindung wird geprüft …"
                 scope.launch {
                     status = try {
-                        val result = AiAssistant.testConnection(provider, currentKey().trim(), currentModel().trim())
+                        val result = AiAssistant.testConnection(
+                            this@AiSettingsActivity,
+                            provider,
+                            currentKey().trim(),
+                            currentModel().trim(),
+                        )
                         "✓ Verbindung erfolgreich. ${provider.displayName} mit ${currentModel()} funktioniert. Test: $result"
                     } catch (e: Throwable) {
                         e.message ?: "Verbindung fehlgeschlagen"
@@ -281,10 +376,10 @@ class AiSettingsActivity : ComponentActivity() {
 
             Spacer(Modifier.height(8.dp))
             Text("Übersetzen", style = MaterialTheme.typography.titleLarge)
-            Text("Die Übersetzung läuft lokal mit ML Kit. Die Ausgangssprache wird automatisch erkannt. Übersetzt wird in die aktuell aktive Tastatursprache. Sprachmodelle werden bei Bedarf einmalig geladen.")
+            Text("Die Übersetzung kann über den ausgewählten KI Anbieter laufen. Im Inkognito Modus bleibt die Übersetzung lokal, sofern die lokale Übersetzungsfunktion verwendet wird.")
 
             Text("Datenschutz", style = MaterialTheme.typography.titleLarge)
-            Text("Cloud-KI: Nur der aktuelle Absatz oder markierte Text wird per HTTPS an den ausgewählten Anbieter gesendet, und nur nachdem du eine KI Taste drückst. Übersetzen läuft nach dem Modelldownload lokal auf dem Gerät.")
+            Text("Cloud KI wird nur auf Knopfdruck verwendet. Passwortfelder, sensible Eingaben und Inkognito Felder werden nicht an einen Cloud Anbieter gesendet. Bei ChatGPT Login erhält die Tastatur OAuth Tokens statt deines OpenAI API Schlüssels.")
         }
     }
 }
