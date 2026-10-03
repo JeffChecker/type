@@ -498,8 +498,8 @@ object AiBackend {
                 if (model != preferredModel && modelSetting(context, AiProvider.OPENAI) == AUTO_MODEL) {
                     context.getSharedPreferences(AiAssistant.PREFS_NAME, Context.MODE_PRIVATE)
                         .edit()
-                        .putString("auto_model_openai", model)
-                        .putLong("auto_model_time_openai", System.currentTimeMillis())
+                        .putString("auto_model_openai_api", model)
+                        .putLong("auto_model_time_openai_api", System.currentTimeMillis())
                         .apply()
                 }
                 return result
@@ -606,6 +606,9 @@ object AiBackend {
                             answer.append(runCatching { event["delta"]?.jsonPrimitive?.content }.getOrNull().orEmpty())
                         }
                         "response.completed" -> completed = true
+                        "response.incomplete" -> {
+                            throw AiException("ChatGPT konnte die Antwort nicht vollständig abschließen. Bitte erneut versuchen.")
+                        }
                         "response.failed", "error" -> {
                             val responseObj = runCatching { event["response"]?.jsonObject }.getOrNull()
                             val errorObj = runCatching {
