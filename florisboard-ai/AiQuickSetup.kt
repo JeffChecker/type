@@ -24,9 +24,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
-/**
- * Kompakte KI Modellkonfiguration für die Hauptseite und den Einrichtungsassistenten.
- */
+/** Kompakte KI Modellkonfiguration für die Hauptseite. */
 @Composable
 fun AiQuickSetupPanel(
     modifier: Modifier = Modifier,
@@ -54,6 +52,8 @@ fun AiQuickSetupPanel(
         )
     }
 
+    var chatGptConnected by remember { mutableStateOf(ChatGptPlanAuth.isConnected(context)) }
+    var useChatGptPlan by remember { mutableStateOf(ChatGptPlanAuth.shouldUsePlan(context)) }
     var status by remember { mutableStateOf("") }
     var models by remember { mutableStateOf<List<AiModel>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -111,12 +111,16 @@ fun AiQuickSetupPanel(
         status = if (ok) newProvider.displayName + " ist aktiv" else "Anbieter konnte nicht gespeichert werden"
     }
 
+    fun credentialReady(): Boolean =
+        (provider == AiProvider.OPENAI && ChatGptPlanAuth.shouldUsePlan(context)) ||
+            currentKey().trim().isNotBlank()
+
     Column(
         modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text("KI Modellkonfiguration", style = MaterialTheme.typography.titleLarge)
-        Text("Anbieter, API Schlüssel und Modell sind hier direkt erreichbar. Mit „auto“ wird ein passendes Textmodell aus der aktuellen API Modellliste gewählt.")
+        Text("OpenAI kann direkt über ein ChatGPT Konto oder alternativ mit einem eigenen API Schlüssel genutzt werden. Gemini, Claude und Groq verwenden weiterhin ihren jeweiligen API Schlüssel.")
 
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Button(onClick = { chooseProvider(AiProvider.OPENAI) }) { Text(if (provider == AiProvider.OPENAI) "OpenAI ✓" else "OpenAI") }
@@ -127,11 +131,87 @@ fun AiQuickSetupPanel(
             Button(onClick = { chooseProvider(AiProvider.GROQ) }) { Text(if (provider == AiProvider.GROQ) "Groq ✓" else "Groq") }
         }
 
+        if (provider == AiProvider.OPENAI) {
+            Text("ChatGPT Konto", style = MaterialTheme.typography.titleMedium)
+            if (chatGptConnected) {
+                Text("✓ Verbunden: " + ChatGptPlanAuth.accountLabel(context))
+                Text(
+                    if (useChatGptPlan) {
+                        "Der ChatGPT Plan ist für OpenAI Anfragen aktiv."
+                    } else {
+                        "Das Konto ist verbunden, aktuell wird aber der eigene API Schlüssel verwendet."
+                    }
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Button(onClick = {
+                        ChatGptPlanAuth.setUsePlan(context, true)
+                        useChatGptPlan = ChatGptPlanAuth.shouldUsePlan(context)
+                        models = emptyList()
+                        status = if (useChatGptPlan) {
+                            "ChatGPT Plan wird verwendet"
+                        } else {
+                            "Die ChatGPT Plan Freigabe fehlt. Bitte erneut anmelden und die Nutzung freigeben."
+                        }
+                    }) { Text("ChatGPT Plan") }
+                    Button(onClick = {
+                        ChatGptPlanAuth.setUsePlan(context, false)
+                        useChatGptPlan = false
+                        models = emptyList()
+                        status = "OpenAI API Schlüssel wird verwendet"
+                    }) { Text("API Schlüssel") }
+                }
+                Button(
+                    onClick = {
+                        status = "ChatGPT wird abgemeldet …"
+                        scope.launch {
+                            status = try {
+                                ChatGptPlanAuth.signOut(context).also {
+                                    chatGptConnected = false
+                                    useChatGptPlan = false
+                                    models = emptyList()
+                                }
+                            } catch (e: Throwable) {
+                                e.message ?: "Abmeldung fehlgeschlagen"
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("ChatGPT abmelden") }
+            } else {
+                Text("Mit ChatGPT anmelden verwendet den offiziellen OpenAI Login. Ein OpenAI API Schlüssel ist dafür nicht erforderlich.")
+                Button(
+                    onClick = {
+                        status = "ChatGPT Anmeldung wurde im Browser geöffnet …"
+                        scope.launch {
+                            status = try {
+                                ChatGptPlanAuth.signIn(context).also {
+                                    chatGptConnected = true
+                                    useChatGptPlan = ChatGptPlanAuth.shouldUsePlan(context)
+                                    models = emptyList()
+                                }
+                            } catch (e: Throwable) {
+                                e.message ?: "ChatGPT Anmeldung fehlgeschlagen"
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Mit ChatGPT anmelden") }
+            }
+        }
+
         OutlinedTextField(
             value = currentKey(),
             onValueChange = { setCurrentKey(it) },
             modifier = Modifier.fillMaxWidth(),
-            label = { Text(provider.displayName + " API Schlüssel") },
+            label = {
+                Text(
+                    if (provider == AiProvider.OPENAI) {
+                        "OpenAI API Schlüssel (optional)"
+                    } else {
+                        provider.displayName + " API Schlüssel"
+                    }
+                )
+            },
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
         )
@@ -141,7 +221,7 @@ fun AiQuickSetupPanel(
             onValueChange = { setCurrentModel(it) },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Modell") },
-            supportingText = { Text("auto = automatisch aus der aktuellen Modellliste wählen") },
+            supportingText = { Text("auto = automatisch aus der aktuell verfügbaren Modellliste wählen") },
             singleLine = true,
         )
 
@@ -161,10 +241,14 @@ fun AiQuickSetupPanel(
                     status = "Speichern fehlgeschlagen"
                     return@Button
                 }
+                if (!credentialReady()) {
+                    status = AiBackend.credentialHint(context)
+                    return@Button
+                }
                 status = "Modelle werden geladen …"
                 scope.launch {
                     status = try {
-                        models = AiBackend.listModels(provider, currentKey().trim())
+                        models = AiBackend.listModels(context, provider, currentKey().trim())
                         val automatic = AiBackend.chooseAutomaticModel(provider, models)
                         models.size.toString() + " Modelle gefunden. Auto würde " + automatic.displayName + " verwenden."
                     } catch (e: Throwable) {
@@ -199,10 +283,14 @@ fun AiQuickSetupPanel(
                     status = "Speichern fehlgeschlagen"
                     return@Button
                 }
+                if (!credentialReady()) {
+                    status = AiBackend.credentialHint(context)
+                    return@Button
+                }
                 status = "Verbindung wird geprüft …"
                 scope.launch {
                     status = try {
-                        AiAssistant.testConnection(provider, currentKey().trim(), currentModel().trim())
+                        AiAssistant.testConnection(context, provider, currentKey().trim(), currentModel().trim())
                         "✓ Verbindung erfolgreich"
                     } catch (e: Throwable) {
                         e.message ?: "Verbindung fehlgeschlagen"
@@ -217,7 +305,7 @@ fun AiQuickSetupPanel(
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AiBackend.apiKeyPage(provider))))
             },
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("API Schlüssel beim Anbieter öffnen") }
+        ) { Text(if (provider == AiProvider.OPENAI) "OpenAI API Schlüssel Seite öffnen" else "API Schlüssel beim Anbieter öffnen") }
 
         if (status.isNotBlank()) Text(status, style = MaterialTheme.typography.bodyLarge)
 
