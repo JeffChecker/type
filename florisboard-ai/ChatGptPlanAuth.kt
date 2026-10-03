@@ -354,7 +354,7 @@ object ChatGptPlanAuth {
                     )
                 }.getOrNull()
             }
-            remotelyRevoked = response?.first in 200..299
+            remotelyRevoked = response?.first?.let { it in 200..299 } == true
         }
 
         clearTokens(context)
