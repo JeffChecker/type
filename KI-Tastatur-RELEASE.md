@@ -1,89 +1,51 @@
-# KI Tastatur Beta v5
+# KI Tastatur Beta v6
 
-**Die Android Tastatur mit KI direkt beim Schreiben.**
+**Texte werden jetzt zuerst verstanden und danach neu formuliert.**
 
-KI Tastatur bringt Korrektur, Stilwechsel, Prompt Optimierung und Übersetzung dorthin, wo sie gebraucht werden: direkt in die Tastatur.
+Beta v6 überarbeitet die eigentliche Schreiblogik. Korrigieren und alle Stilarten prüfen nicht mehr nur einzelne Wörter. Der vollständige Absatz oder markierte Text wird zuerst als zusammenhängende Aussage verstanden.
 
-Kein Kopieren in andere Apps. Kein automatisches Eingreifen während du noch schreibst. Du entscheidest selbst, wann die KI helfen soll.
+## Neu: deutlich stärkere Korrektur
 
-## Was KI Tastatur besonders macht
+**KI korrigieren** prüft Sinn, Logik, Grammatik, Satzbau, Wortbezüge, Zeitform, Zeichensetzung und typische Diktatfehler im Zusammenhang.
 
-### Texte verstehen statt nur Rechtschreibung prüfen
+Ein grammatisch falscher oder unnatürlicher Satz darf vollständig neu aufgebaut werden. Dabei sollen Fakten, Namen, Zahlen, Termine, Fragen, Forderungen und die erkennbare Absicht erhalten bleiben.
 
-Mit **KI korrigieren** wird nicht nur auf Rechtschreibung und Grammatik geschaut. Beta v5 verwendet eine robuste Fallback Logik: markierter Text, aktueller Absatz, aktueller Satz oder ein Textblock vor dem Cursor. Dadurch funktioniert die Korrektur zuverlässiger in unterschiedlichen Apps und Eingabefeldern.
+Bewusst gesetzte Endzeichen wie `!`, `?`, `?!` und `…` bleiben erhalten. Ein normaler fehlender Punkt darf jetzt sinnvoll ergänzt werden.
 
-Die Korrektur startet ausschließlich auf Knopfdruck. Eigene Satzzeichen wie `!`, `?`, `?!`, `!!` oder `…` sollen erhalten bleiben.
+## Neu: alle Stil Prompts überarbeitet
 
-### Ein Text, viele Stile
+Freundlich, Professionell, Geschäftlich, Stilvoll, Locker, Humorvoll, Sarkastisch, Flirtend, Verführerisch, Persönlich, Direkt, Kurz, Einfache Sprache, Du Form und Sie Form führen zuerst eine Sinnprüfung durch.
 
-Mit **Stil** kannst du denselben Inhalt passend zur Situation umformulieren:
+Danach wird der gewünschte Stil umgesetzt. Humor entsteht aus dem vorhandenen Zusammenhang. Persönliche Texte sollen individuell und nahbar wirken. Professionelle Texte bleiben klar und natürlich. Unnötige KI Floskeln und künstliche Formulierungen werden ausdrücklich vermieden.
 
-**Freundlich · Professionell · Geschäftlich · Stilvoll · Locker · Humorvoll · Sarkastisch · Flirtend · Verführerisch · Direkt · Kurz · Einfache Sprache · Du Form · Sie Form**
+## Neu: Mit ChatGPT anmelden
 
-Die Texte sollen natürlich und menschlich wirken. Typische KI Floskeln, künstlich glatte Formulierungen und unnötige Gedankenstriche werden möglichst vermieden.
+OpenAI kann in Beta v6 über den offiziellen **Sign in with ChatGPT** Ablauf verbunden werden.
 
-### Prompt+ für bessere KI Anfragen
+Berechtigte Nutzer können nach eigener Zustimmung ihre freigegebene ChatGPT Plan Nutzung für OpenAI Anfragen der Tastatur verwenden. Dafür muss kein OpenAI API Schlüssel in der App eingetragen werden.
 
-Du hast eine grobe Idee, aber noch keinen guten Prompt? **Prompt+** macht daraus eine klar strukturierte Anfrage mit Ziel, Kontext und wichtigen Vorgaben, ohne neue Fakten zu erfinden.
+Die bisherige OpenAI API Schlüssel Nutzung bleibt als Alternative erhalten. In den Einstellungen kann jederzeit zwischen ChatGPT Plan und API Schlüssel gewechselt werden.
 
-### Übersetzen direkt auf dem Gerät
+Der Login verwendet den Systembrowser, PKCE, State und Nonce Prüfung, ID Token Prüfung und rotierende OAuth Tokens. Die Inferenz läuft über die öffentliche OpenAI Responses API mit `store: false` und `stream: true`.
 
-Beta v5 übersetzt standardmäßig mit dem **bereits eingerichteten KI Anbieter**. OpenAI, Gemini, Claude oder Groq verwenden denselben API Schlüssel und dasselbe ausgewählte Modell wie die übrigen KI Funktionen. Ein zusätzlicher Übersetzungs Schlüssel ist nicht erforderlich. Die Ausgangssprache wird automatisch erkannt und der Text wird mit einem strengen Übersetzungs Prompt sinngenau, vollständig und ohne zusätzliche Inhalte übertragen.
+## Weitere Anbieter
 
-Die Zielsprache kann der aktiven Tastatursprache folgen oder aus einer großen Sprachliste gewählt werden. Optional kann Google Cloud Translation als Fallback hinterlegt werden. Im Inkognito Modus wird ausschließlich lokal über **Google ML Kit** übersetzt.
-
-### Du entscheidest, welche KI du nutzt
-
-Unterstützt werden aktuell:
-
-- **OpenAI**
-- **Google Gemini**
-- **Anthropic Claude**
-- **Groq**
-
-Die Modellkonfiguration ist jetzt direkt auf der Hauptseite sichtbar. Anbieter, API Schlüssel, Modellwahl, Modellliste und Verbindungstest sind ohne verstecktes Untermenü erreichbar. Die verfügbaren Modelle werden direkt über die jeweilige API geladen.
-
-## Für Tippen und Spracheingabe
-
-KI Tastatur ist nicht nur für klassische Texteingabe gedacht. Auch diktierte Texte lassen sich anschließend als Ganzes korrigieren und verständlicher formulieren.
+Google Gemini, Anthropic Claude und Groq bleiben verfügbar. Sie verwenden weiterhin ihre offiziellen Entwickler Zugänge. Die Tastatur automatisiert keine Chat Webseiten und versucht nicht, normale Abonnements über undokumentierte Schnittstellen zu verwenden.
 
 ## Datenschutz
 
-Passwortfelder, sensible Eingabefelder und Inkognito Felder werden nicht an eine Cloud KI gesendet.
-
-Cloud Funktionen werden nur ausgelöst, wenn du selbst auf Korrigieren, Stil, Prompt+ oder eine aktivierte Cloud Übersetzung tippst. Google Cloud Übersetzungen werden an Google Translate gesendet. Im Inkognito Modus verwendet die App ausschließlich die lokale ML Kit Übersetzung.
+Cloud Funktionen laufen nur auf Knopfdruck. Passwortfelder, sensible Eingaben und Inkognito Felder werden nicht an Cloud KI Anbieter gesendet.
 
 ## Installation
 
-1. **KI-Tastatur-Beta-v5.apk** herunterladen.
+1. **KI-Tastatur-Beta-v6.apk** herunterladen.
 2. APK installieren.
-3. KI Tastatur in den Android Einstellungen aktivieren.
+3. KI Tastatur in Android aktivieren.
 4. Als Eingabemethode auswählen.
-5. In den KI Einstellungen einen Anbieter wählen.
-6. Eigenen API Schlüssel eintragen.
-7. Modelle laden und eines auswählen oder `auto` verwenden.
+5. KI Einstellungen öffnen.
+6. OpenAI direkt mit ChatGPT verbinden oder einen API Anbieter konfigurieren.
+7. `auto` für die Modellwahl verwenden oder ein verfügbares Modell auswählen.
 8. Verbindung testen.
-
-
-
-### OpenAI Verbindung verbessert
-
-Beta v5 prüft OpenAI nicht mehr nur mit einem einzigen automatisch gewählten Modell. Wenn ein Modell vom Projekt oder Endpunkt abgelehnt wird, testet die App weitere Modelle aus der vom OpenAI Konto gelieferten Modellliste.
-
-Fehlermeldungen unterscheiden jetzt klarer zwischen:
-
-- ungültigem API Schlüssel
-- fehlender Projekt oder Modellberechtigung
-- fehlendem API Guthaben bzw. Kontingent
-- Rate Limit
-- nicht verfügbarem Modell
-- ungültiger API Anfrage
-
-Dadurch lässt sich direkt in der App erkennen, warum OpenAI nicht funktioniert.
-
-## Beta v5
-
-Diese Beta konzentriert sich auf eine robustere OpenAI Verbindung. API Fehler werden genauer angezeigt, aktuelle OpenAI Textmodelle werden bevorzugt und bei Modellfehlern werden automatisch weitere tatsächlich verfügbare Modelle getestet. Das gilt für Verbindungstest, Korrigieren, Stil und KI Übersetzen. Weitere Testversionen folgen fortlaufend als **Beta v6, Beta v7** usw.
 
 ## Open Source Grundlage
 
