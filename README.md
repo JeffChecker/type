@@ -6,75 +6,79 @@
 <p align="center"><strong>Schreiben. Verstehen. Verbessern. Direkt auf der Tastatur.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v5"><strong>Beta v5 herunterladen</strong></a>
+  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v6"><strong>Beta v6 herunterladen</strong></a>
 </p>
 
-## Deine Tastatur kann jetzt mehr als tippen
+## Texte verstehen statt Wörter austauschen
 
-KI Tastatur verbindet eine vollwertige Android Tastatur mit einem intelligenten Schreibassistenten. Du schreibst wie gewohnt und entscheidest selbst, wann die KI helfen soll.
+KI Tastatur verbindet FlorisBoard mit einer KI Schreibassistenz. Du schreibst wie gewohnt und entscheidest selbst, wann die KI helfen soll.
 
-Ein Tastendruck genügt, um einen Text zu korrigieren, verständlicher zu machen, den Stil zu ändern, einen Prompt zu verbessern oder Inhalte zu übersetzen. Dabei soll der Text nicht künstlich oder nach KI klingen, sondern natürlich und menschlich.
+Beta v6 prüft einen markierten Text oder den aktuellen Absatz als zusammenhängende Aussage. Die KI liest zuerst den vollständigen Text, ermittelt Sinn, Empfänger, Ton und gewünschte Handlung und prüft danach die einzelnen Sätze im Zusammenhang. Holprige, verdrehte oder durch Diktat falsch erkannte Sätze dürfen vollständig neu formuliert werden. Fakten, Namen, Zahlen, Termine, Fragen und Forderungen sollen dabei erhalten bleiben.
 
-## Die wichtigsten Funktionen
+Die Korrektur startet ausschließlich auf Knopfdruck. Bewusst gesetzte Satzenden wie `!`, `?`, `?!` oder `…` bleiben erhalten. Ein fehlender normaler Punkt darf ergänzt werden, wenn der Satz dadurch grammatisch vollständig wird.
 
-### KI Korrektur
+## Stil auf Knopfdruck
 
-Mit **KI korrigieren** wird zuerst markierter Text verwendet. Ohne Markierung versucht die Tastatur den aktuellen Absatz zu erfassen. Falls ein Textfeld Absätze nicht sauber liefert, nutzt sie automatisch den aktuellen Satz oder den Textblock vor dem Cursor. Dadurch funktioniert die Korrektur auch in mehr Apps zuverlässig. Die KI berücksichtigt Zusammenhang, Sinn, typische Diktierfehler und missverständliche Formulierungen.
+Über **Stil** kann derselbe Inhalt passend zur Situation neu formuliert werden:
 
-Die Korrektur startet ausschließlich auf Knopfdruck. Es gibt keine automatische Änderung während du noch schreibst oder nachdenkst. Eigene Satzzeichen wie `!`, `?`, `?!`, `!!` und `…` sollen erhalten bleiben.
+**Freundlich · Professionell · Geschäftlich · Stilvoll · Locker · Humorvoll · Sarkastisch · Flirtend · Verführerisch · Persönlich · Direkt · Kurz · Einfache Sprache · Du Form · Sie Form**
 
-### Stil auf Knopfdruck
+Jeder Stil beginnt mit derselben Sinnprüfung. Erst danach wird der gewünschte Ton umgesetzt. Humor soll aus dem vorhandenen Zusammenhang entstehen. Persönliche Texte sollen individuell statt austauschbar wirken. Geschäftliche und professionelle Texte sollen klar und menschlich bleiben. Typische KI Floskeln, künstliche Einleitungen und unnötige Gedankenstriche werden vermieden.
 
-Über **Stil** kannst du denselben Inhalt passend zur Situation umformulieren. Zum Beispiel:
+## Prompt+
 
-**Freundlich · Professionell · Geschäftlich · Stilvoll · Locker · Humorvoll · Sarkastisch · Flirtend · Verführerisch · Direkt · Kurz · Einfache Sprache · Du Form · Sie Form**
+**Prompt+** liest einen Rohentwurf vollständig, erkennt Ziel, Kontext, Anforderungen und gewünschtes Ergebnis und macht daraus einen direkt nutzbaren KI Prompt. Fehlende Tatsachen werden nicht erfunden.
 
-Die Stilprompts sind bewusst auf natürliche Sprache ausgelegt. Unnötige KI Floskeln, künstlich glatte Formulierungen und überflüssige Gedankenstriche werden vermieden.
+## OpenAI direkt mit ChatGPT verbinden
 
-### Prompt+
+Beta v6 unterstützt den offiziellen OpenAI Ablauf **Sign in with ChatGPT** für Open Source Anwendungen.
 
-Aus einer groben Idee wird ein klarer Prompt. **Prompt+** erkennt Ziel, Kontext, gewünschtes Ergebnis und wichtige Vorgaben und strukturiert den Text so, dass KI Systeme ihn besser verstehen können, ohne neue Fakten zu erfinden.
+Damit kann ein berechtigter ChatGPT Nutzer sein ChatGPT Konto direkt mit der Tastatur verbinden. Die Tastatur erhält nach Zustimmung OAuth Zugangsdaten. Ein OpenAI API Schlüssel muss für diese Zugangsart nicht in der App eingetragen werden.
 
-### Übersetzen
+Alternativ bleibt die bisherige OpenAI API Schlüssel Nutzung vollständig erhalten. In den KI Einstellungen kann zwischen **ChatGPT Plan** und **API Schlüssel** gewechselt werden.
 
-Texte können direkt aus der Tastatur übersetzt werden. Die Ausgangssprache wird automatisch erkannt. Als Ziel wird die aktuell aktive Tastatursprache verwendet.
+Die ChatGPT Anmeldung verwendet den Systembrowser, PKCE, State und Nonce Prüfung sowie die von OpenAI dokumentierten OAuth Endpunkte. KI Anfragen über die ChatGPT Plan Freigabe werden mit `store: false` und `stream: true` an die öffentliche OpenAI Responses API gesendet.
 
-Die Übersetzung arbeitet in Beta v5 bevorzugt mit dem **bereits eingerichteten KI Anbieter und demselben API Schlüssel**, der auch für Korrigieren und Stil verwendet wird. Ein zweiter Schlüssel ist dafür nicht nötig. Die KI erkennt die Ausgangssprache selbst und übersetzt kontextbezogen in die gewählte Zielsprache. Optional kann Google Cloud Translation als Fallback eingerichtet werden; im Inkognito Modus bleibt die Übersetzung lokal über **Google ML Kit**.
+## Weitere KI Anbieter
 
-### Freie Wahl des KI Anbieters
+Zusätzlich werden weiterhin unterstützt:
 
-KI Tastatur unterstützt derzeit:
+* **Google Gemini** über einen eigenen Gemini API Zugang
+* **Anthropic Claude** über einen eigenen Claude API Zugang
+* **Groq** über einen eigenen Groq API Zugang
 
-- **OpenAI**
-- **Google Gemini**
-- **Anthropic Claude**
-- **Groq**
+Die Anbieter werden bewusst nicht über inoffizielle Webseiten Automation angebunden. Wenn ein Anbieter keine offizielle Freigabe eines normalen Chat Abos für Drittanbieter Apps vorsieht, verwendet KI Tastatur dessen offizielle Entwickler Schnittstelle.
 
-Jeder Anbieter erhält seinen eigenen API Schlüssel. Die Modellkonfiguration ist direkt auf der Hauptseite der App sichtbar. Dort kannst du Anbieter, API Schlüssel und Modell einstellen, aktuelle Modelle laden und die Verbindung testen. Die verfügbaren Modelle werden direkt über die jeweilige API geladen.
+## Automatische Modellwahl
 
-## Für Diktat genauso gedacht wie für Tippen
+Mit `auto` lädt die Tastatur die für den gewählten Zugang tatsächlich verfügbaren Modelle. Bei OpenAI mit ChatGPT Login wird die Modellliste des angemeldeten ChatGPT Kontos verwendet. Bei API Zugängen wird die jeweilige API Modellliste geladen.
 
-Gerade Spracheingabe produziert häufig kleine Fehler, fehlende Satzzeichen oder falsche Wörter. KI Tastatur kann solche Texte nach dem Diktieren auf Knopfdruck als Ganzes prüfen und sinnvoll überarbeiten.
+Modelle können auch manuell gewählt und die Verbindung direkt in der App getestet werden.
+
+## Übersetzen
+
+Texte können direkt über den ausgewählten KI Anbieter übersetzt werden. Die Ausgangssprache wird automatisch erkannt und der vollständige Inhalt wird sinngenau in die Zielsprache übertragen.
+
+Die vorhandene lokale Übersetzung bleibt für den dafür vorgesehenen lokalen Modus erhalten.
 
 ## Datenschutz
 
-Passwortfelder, sensible Eingaben und Inkognito Felder werden nicht an eine Cloud KI gesendet. Für Korrektur, Stil oder Prompt+ wird nur der Text an den Anbieter übertragen, den du selbst eingerichtet hast. Cloud Übersetzungen werden nur im Google Cloud Modus an Google Translate gesendet. Im Inkognito Modus bleibt die Übersetzung lokal.
+Cloud KI wird nur ausgelöst, wenn du selbst eine KI Funktion betätigst. Passwortfelder, als sensibel erkannte Eingabefelder, Rohfelder und Inkognito Eingaben werden nicht an einen Cloud Anbieter gesendet.
 
-API Schlüssel werden nicht in der App mitgeliefert und nicht im öffentlichen Quellcode hinterlegt.
+Bei OpenAI Login werden keine Zugangsdaten für chatgpt.com abgefragt oder ausgelesen. Die Anmeldung erfolgt über den offiziellen OpenAI OAuth Ablauf. API Schlüssel und OAuth Tokens werden nicht im öffentlichen Quellcode hinterlegt.
 
 ## Installation
 
-1. Lade **KI Tastatur Beta v5** aus den GitHub Releases herunter.
-2. Installiere die APK.
-3. Aktiviere KI Tastatur in den Android Einstellungen.
-4. Lege sie als Eingabemethode fest.
-5. Öffne die KI Einstellungen.
-6. Wähle OpenAI, Gemini, Claude oder Groq.
-7. Trage deinen eigenen API Schlüssel ein.
-8. Lade die verfügbaren Modelle und wähle eines aus oder nutze `auto`.
-9. Teste die Verbindung.
+1. **KI-Tastatur-Beta-v6.apk** aus den GitHub Releases herunterladen.
+2. APK installieren.
+3. KI Tastatur in den Android Einstellungen aktivieren.
+4. Als Eingabemethode auswählen.
+5. KI Einstellungen öffnen.
+6. OpenAI wählen und **Mit ChatGPT anmelden** verwenden oder einen API Schlüssel hinterlegen. Für Gemini, Claude oder Groq den jeweiligen API Zugang eintragen.
+7. Modell auf `auto` lassen oder die verfügbaren Modelle laden und eines auswählen.
+8. Verbindung testen.
 
-> Beta v5 ist eine Testversion. Schwerpunkt ist die robustere OpenAI Anbindung mit genauer Fehlerdiagnose, aktueller Modellwahl und automatischem Modell Fallback.
+Beta v6 ist eine Testversion. Der neue ChatGPT Login ist ein aktuell von OpenAI als Preview dokumentierter Open Source Ablauf und kann sich deshalb noch ändern.
 
 ## Technische Basis
 
@@ -83,10 +87,3 @@ KI Tastatur basiert auf dem Open Source Projekt **FlorisBoard** und wird auf Gru
 Originalprojekt: https://github.com/florisboard/florisboard
 
 Die sichtbare Produktbezeichnung dieser Variante ist **KI Tastatur**. FlorisBoard bleibt als technische Herkunft und Lizenzquelle genannt.
-
-
-## OpenAI in Beta v5
-
-Die OpenAI Anbindung wurde robuster gemacht. Die App prüft den API Schlüssel gegen die aktuelle Modellliste, bevorzugt aktuelle Textmodelle und testet bei einem abgelehnten Modell automatisch weitere verfügbare Modelle. OpenAI Fehler werden nicht mehr pauschal zusammengefasst, sondern unterscheiden unter anderem ungültigen Schlüssel, fehlende Berechtigung, fehlendes API Guthaben, Rate Limit und Modellfehler.
-
-Für Korrigieren, Stil und KI Übersetzen gilt derselbe Fallback.
