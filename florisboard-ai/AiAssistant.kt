@@ -207,19 +207,23 @@ class AiAssistant(private val context: Context) {
      * Satzzeichen gesetzt, fügt die KI am Ende keines ungefragt hinzu.
      */
     private fun preserveUserEnding(original: String, corrected: String): String {
-        val punctuation = charArrayOf('.', '!', '?', '…')
+        val allEndingPunctuation = charArrayOf('.', '!', '?', '…')
+        val expressivePunctuation = charArrayOf('!', '?', '…')
         val originalTrimmed = original.trimEnd()
         val correctedTrimmed = corrected.trimEnd()
         if (correctedTrimmed.isBlank()) return corrected
 
-        val originalEnding = originalTrimmed.takeLastWhile { it in punctuation }
-        val correctedBase = correctedTrimmed.dropLastWhile { it in punctuation }.trimEnd()
-
-        return if (originalEnding.isNotEmpty()) {
-            correctedBase + originalEnding
-        } else {
-            correctedBase
+        // Bewusst gesetzte emotionale Satzenden bleiben exakt erhalten.
+        // Ein normaler Punkt darf ergänzt werden, wenn eine schnelle Eingabe
+        // oder ein Diktat ohne Satzzeichen endet.
+        val expressiveEnding = when {
+            originalTrimmed.endsWith("...") -> "..."
+            else -> originalTrimmed.takeLastWhile { it in expressivePunctuation }
         }
+        if (expressiveEnding.isEmpty()) return correctedTrimmed
+
+        val correctedBase = correctedTrimmed.dropLastWhile { it in allEndingPunctuation }.trimEnd()
+        return correctedBase + expressiveEnding
     }
 
     private suspend fun applyIfStillCurrent(target: Target, replacement: String) {
