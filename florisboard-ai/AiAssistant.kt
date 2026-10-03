@@ -20,8 +20,8 @@ class AiAssistant(private val context: Context) {
         const val KEY_MODEL = AiBackend.LEGACY_KEY_MODEL
         const val DEFAULT_MODEL = AiBackend.AUTO_MODEL
 
-        suspend fun testConnection(provider: AiProvider, apiKey: String, model: String): String =
-            AiBackend.testConnection(provider, apiKey, model)
+        suspend fun testConnection(context: Context, provider: AiProvider, apiKey: String, model: String): String =
+            AiBackend.testConnection(context, provider, apiKey, model)
     }
 
     private val appContext = context.applicationContext
@@ -59,7 +59,7 @@ class AiAssistant(private val context: Context) {
             return
         }
         if (!AiBackend.hasApiKey(appContext)) {
-            toast("Bitte zuerst einen ${AiBackend.providerDisplayName(appContext)} API Schlüssel eintragen")
+            toast(AiBackend.credentialHint(appContext))
             openSettings()
             return
         }
