@@ -292,23 +292,98 @@ class AiAssistant(private val context: Context) {
 }
 
 enum class AiStyle(val instruction: String) {
-    CORRECT("Lies den gesamten Eingabetext zuerst vollständig und bestimme seine beabsichtigte Aussage. Korrigiere dann nur, was tatsächlich fehlerhaft oder durch Diktat offensichtlich falsch erkannt wurde: Rechtschreibung, Grammatik, Groß und Kleinschreibung, Wortwahl im eindeutigen Kontext und Zeichensetzung. Formuliere unklare Stellen nur dann um, wenn die beabsichtigte Aussage sicher erkennbar ist. Behalte Namen, Zahlen, Termine, Fachbegriffe, Anrede, Ton und persönliche Wortwahl bei. Erfinde nichts. Entferne keine wichtigen Informationen. Ein vorhandenes abschließendes !, ?, ?!, !! oder … muss exakt erhalten bleiben. Hat der Nutzer am Ende noch kein Satzzeichen gesetzt, füge keines hinzu. Gib ausschließlich den korrigierten Text aus."),
-    FRIENDLY("Formuliere denselben Inhalt spürbar freundlicher, warm und respektvoll, aber nicht überschwänglich. Vermeide Floskeln, künstliche Herzlichkeit und übertriebene Höflichkeit. Die Nachricht soll wie von einer echten Person wirken. Alle Fakten, Wünsche und Aussagen bleiben vollständig erhalten. Gib nur den fertigen Text aus."),
-    PROFESSIONAL("Formuliere den Inhalt professionell, klar, souverän und präzise. Nutze natürliche Geschäftssprache statt Amtsdeutsch oder KI Floskeln. Ordne Gedanken sinnvoll, beseitige Unklarheiten und lasse alle Fakten, Namen, Zahlen, Fristen und Absichten unverändert. Gib nur den fertigen Text aus."),
-    CASUAL("Formuliere denselben Inhalt locker, direkt und natürlich, wie in einer echten Alltagsnachricht. Keine künstliche Jugendsprache, keine übertriebene Coolness und keine KI Floskeln. Inhalt und Absicht vollständig erhalten. Gib nur den fertigen Text aus."),
-    HUMOROUS("Formuliere denselben Inhalt deutlich humorvoller und pointierter. Der Humor soll aus Situation und Wortwahl entstehen, nicht aus erfundenen Fakten. Keine Witze erklären. Nicht albern, verletzend oder künstlich wirken. Kernaussage und wichtige Informationen bleiben erhalten. Gib nur den fertigen Text aus."),
-    IRONIC("Formuliere denselben Inhalt klar erkennbar sarkastisch und trocken ironisch. Die Spitze darf deutlich sein, soll aber nicht beleidigen oder entmenschlichen. Keine Erklärung des Sarkasmus und keine erfundenen Behauptungen. Fakten und eigentliche Aussage bleiben vollständig erhalten. Gib nur den fertigen Text aus."),
-    FLIRTY("Formuliere den Inhalt charmant, spielerisch, selbstbewusst und eindeutig flirtend. Zeige echtes Interesse und leichte Spannung, ohne kitschig, plump, drängend oder manipulativ zu wirken. Keine expliziten sexuellen Beschreibungen. Vorhandene Fakten und Absichten erhalten. Gib nur den fertigen Text aus."),
-    SUGGESTIVE("Formuliere den Inhalt für erwachsene einvernehmliche Kommunikation verführerisch, selbstbewusst und deutlich zweideutig. Sexuelles Interesse darf klar erkennbar sein, aber ohne grafische sexuelle Beschreibungen, Druck, Drohung, Manipulation oder unterstellte Zustimmung. Der Ton soll natürlich und respektvoll bleiben. Gib nur den fertigen Text aus."),
-    ELEGANT("Formuliere denselben Inhalt stilvoll, souverän und sprachlich hochwertig, aber weiterhin natürlich. Vermeide gestelzte Fremdwörter, Pathos, Floskeln und übertriebene Eleganz. Aussage, Fakten und Persönlichkeit des Ausgangstextes bleiben erhalten. Gib nur den fertigen Text aus."),
-    BUSINESS("Formuliere den Inhalt als klare geschäftliche Nachricht. Das Ziel, gewünschte Handlung, Verantwortlichkeit, Termine, Zahlen und offene Punkte müssen sofort verständlich sein. Schreibe verbindlich und professionell, aber nicht bürokratisch. Keine Fakten ergänzen oder weglassen. Gib nur den fertigen Text aus."),
-    PERSONAL("Formuliere den Inhalt persönlich, authentisch und nahbar, als hätte der Absender ihn selbst bewusst geschrieben. Behalte individuelle Wortwahl und Emotionen soweit möglich. Keine generischen Wohlfühlfloskeln und keine erfundenen persönlichen Details. Gib nur den fertigen Text aus."),
-    DU("Ändere ausschließlich die Ansprache konsequent in eine natürliche Du Form. Passe Pronomen, Anrede und notwendigen Satzbau an. Inhalt, Ton, Fakten und Aussage dürfen sich sonst nicht verändern. Gib nur den fertigen Text aus."),
-    SIE("Ändere ausschließlich die Ansprache konsequent in eine höfliche, natürliche Sie Form. Passe Pronomen, Anrede und notwendigen Satzbau an. Inhalt, Ton, Fakten und Aussage dürfen sich sonst nicht verändern. Gib nur den fertigen Text aus."),
-    SHORT("Kürze den Text deutlich und entferne Wiederholungen, Füllwörter und Nebensächlichkeiten. Ziel ist ungefähr ein Drittel weniger Text, sofern das ohne Informationsverlust möglich ist. Namen, Zahlen, Termine, Forderungen, Entscheidungen und Handlungsaufforderungen müssen erhalten bleiben. Gib nur den gekürzten Text aus."),
-    SIMPLE("Formuliere den vollständigen Inhalt in sehr klarer Alltagssprache. Nutze kurze Sätze, bekannte Wörter und eine eindeutige Reihenfolge. Erkläre schwierige Formulierungen einfacher, ohne wichtige Informationen zu streichen oder neue Fakten hinzuzufügen. Gib nur den fertigen Text aus."),
-    DIRECT("Formuliere die Aussage wesentlich direkter und klarer. Beginne mit dem eigentlichen Anliegen, entferne Umwege, Füllwörter und unnötige Einleitungen. Bleibe angemessen respektvoll. Fakten, Bedingungen und Absicht müssen vollständig erhalten bleiben. Gib nur den fertigen Text aus."),
-    PROMPT("Der Eingabetext ist ein Rohentwurf für einen KI Prompt. Ermittle zuerst das konkrete Ziel. Formuliere daraus einen präzisen Arbeitsauftrag mit relevantem Kontext, klaren Anforderungen, Grenzen und gewünschtem Ausgabeformat, soweit diese Angaben vorhanden oder eindeutig ableitbar sind. Entferne Widersprüche und unnötige Wiederholungen. Erfinde niemals Fakten, Namen, Daten oder Anforderungen. Fehlen entscheidende Angaben, formuliere sinnvolle Platzhalter oder weise im Prompt darauf hin, was die ausführende KI selbst klären soll. Der verbesserte Prompt muss direkt verwendbar sein. Gib ausschließlich den verbesserten Prompt aus."),
+    CORRECT(
+        "Prüfe den gesamten Text als zusammenhängende Aussage und nicht Wort für Wort. " +
+            "Ermittle intern zuerst, was die Person tatsächlich sagen will, an wen sich der Text richtet und welche Informationen zusammengehören. " +
+            "Prüfe danach jeden vollständigen Satz im Zusammenhang mit den Sätzen davor und danach auf Sinn, Logik, Grammatik, Wortwahl, Satzbau, Bezüge, Zeitform und Zeichensetzung. " +
+            "Wenn ein Satz zwar einzelne richtige Wörter enthält, aber unnatürlich, missverständlich oder durch Diktat verdreht ist, formuliere den ganzen Satz neu. " +
+            "Korrigiere offensichtliche Spracherkennungsfehler anhand des Zusammenhangs. " +
+            "Erhalte alle sicher erkennbaren Fakten, Namen, Zahlen, Termine, Forderungen, Fragen, Anreden und die beabsichtigte Wirkung. " +
+            "Erfinde keine Informationen und ändere keine Aussage nur, um den Text schöner wirken zu lassen. " +
+            "Das Ergebnis soll sich lesen, als hätte ein aufmerksamer Mensch den Text selbst sauber formuliert. Gib ausschließlich den fertigen Text aus."
+    ),
+    FRIENDLY(
+        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach denselben Inhalt freundlich, warm und respektvoll. " +
+            "Freundlichkeit soll durch natürliche Wortwahl und einen angenehmen Ton entstehen, nicht durch übertriebene Höflichkeitsfloskeln. " +
+            "Lass Bitten und Aussagen klar. Bewahre Fakten, Grenzen und gewünschte Handlungen. Gib ausschließlich den fertigen Text aus."
+    ),
+    PROFESSIONAL(
+        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach professionell, klar, souverän und präzise. " +
+            "Ordne Gedanken in einer nachvollziehbaren Reihenfolge und formuliere auch ganze Sätze neu, wenn sie holprig oder unklar sind. " +
+            "Nutze natürliche berufliche Sprache statt Amtsdeutsch, Werbesprache oder typischer KI Formulierungen. " +
+            "Fakten, Namen, Zahlen, Fristen, Zuständigkeiten und Absichten bleiben unverändert. Gib ausschließlich den fertigen Text aus."
+    ),
+    CASUAL(
+        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach locker, spontan und natürlich wie in einer echten Alltagsnachricht. " +
+            "Der Text darf unkompliziert klingen, soll aber verständlich bleiben. Keine künstliche Jugendsprache, keine aufgesetzte Coolness und keine generischen KI Floskeln. " +
+            "Inhalt, Persönlichkeit und Absicht bleiben erhalten. Gib ausschließlich den fertigen Text aus."
+    ),
+    HUMOROUS(
+        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere dann deutlich humorvoller, ohne den eigentlichen Inhalt zu verlieren. " +
+            "Nutze den vorhandenen Kontext für Wortwitz, überraschende Formulierungen, trockene Pointen oder leichte Übertreibung. " +
+            "Der Humor soll zur Situation passen und wie spontan von einem Menschen wirken. Erfinde keine Tatsachen und erkläre keinen Witz. " +
+            "Wichtige Informationen und das Anliegen müssen weiterhin eindeutig verständlich sein. Gib ausschließlich den fertigen Text aus."
+    ),
+    IRONIC(
+        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach trocken, deutlich sarkastisch und erkennbar ironisch. " +
+            "Nutze den tatsächlichen Kontext für die Spitze. Der Text darf bissig sein, aber nicht beleidigend, entwürdigend oder bedrohend. " +
+            "Keine erfundenen Behauptungen und keine Erklärung der Ironie. Die eigentliche Aussage und alle Fakten bleiben erhalten. Gib ausschließlich den fertigen Text aus."
+    ),
+    FLIRTY(
+        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere dann charmant, spielerisch, selbstbewusst und eindeutig flirtend. " +
+            "Baue natürliche Leichtigkeit, Interesse und Spannung auf, ohne kitschig, plump, bedürftig, drängend oder manipulativ zu wirken. " +
+            "Der Text soll wie eine echte persönliche Nachricht klingen. Erfinde keine gemeinsamen Erlebnisse, Gefühle oder Zusagen. Gib ausschließlich den fertigen Text aus."
+    ),
+    SUGGESTIVE(
+        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere den Text für erwachsene einvernehmliche Kommunikation verführerisch, selbstbewusst und deutlich zweideutig. " +
+            "Spannung und sexuelles Interesse dürfen klar erkennbar sein, aber ohne grafische sexuelle Beschreibungen, Druck, Drohung, Manipulation oder unterstellte Zustimmung. " +
+            "Nutze Andeutungen und natürliche Sprache statt plumper Formulierungen. Gib ausschließlich den fertigen Text aus."
+    ),
+    ELEGANT(
+        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach stilvoll, souverän und sprachlich hochwertig, aber weiterhin glaubwürdig und menschlich. " +
+            "Verbessere Rhythmus und Wortwahl, ohne den Text mit Fremdwörtern, Pathos oder unnötig komplizierten Sätzen aufzublähen. " +
+            "Aussage, Fakten und Persönlichkeit bleiben erhalten. Gib ausschließlich den fertigen Text aus."
+    ),
+    BUSINESS(
+        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere den Inhalt danach als klare geschäftliche Nachricht. " +
+            "Das eigentliche Anliegen, die gewünschte Handlung, Zuständigkeiten, Termine, Zahlen und offene Punkte sollen schnell erfassbar sein. " +
+            "Ordne den Text sinnvoll und formuliere verbindlich, professionell und menschlich, nicht bürokratisch oder künstlich. " +
+            "Keine Fakten ergänzen oder weglassen. Gib ausschließlich den fertigen Text aus."
+    ),
+    PERSONAL(
+        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach persönlich, authentisch und nahbar. " +
+            "Erhalte erkennbare Gefühle, individuelle Wortwahl und die Beziehung zum Empfänger. Glätte den Text nicht so stark, dass er austauschbar klingt. " +
+            "Entferne generische Wohlfühlfloskeln und formuliere lieber konkrete, natürliche Sätze. Erfinde keine persönlichen Details oder Gefühle. Gib ausschließlich den fertigen Text aus."
+    ),
+    DU(
+        "Prüfe den vollständigen Text auf Sinn und sprachliche Fehler. Ändere die Ansprache anschließend konsequent in eine natürliche Du Form. " +
+            "Passe Pronomen, Anrede, Verbformen und notwendigen Satzbau an. Inhalt, Fakten, Ton und Aussage dürfen sich ansonsten nicht verändern. Gib ausschließlich den fertigen Text aus."
+    ),
+    SIE(
+        "Prüfe den vollständigen Text auf Sinn und sprachliche Fehler. Ändere die Ansprache anschließend konsequent in eine natürliche höfliche Sie Form. " +
+            "Passe Pronomen, Anrede, Verbformen und notwendigen Satzbau an. Inhalt, Fakten, Ton und Aussage dürfen sich ansonsten nicht verändern. Gib ausschließlich den fertigen Text aus."
+    ),
+    SHORT(
+        "Prüfe zuerst Sinn, Grammatik und Satzbau. Kürze den Text danach deutlich, ohne die Aussage zu beschädigen. " +
+            "Streiche Wiederholungen, Füllwörter und Nebensächlichkeiten und fasse zusammengehörige Aussagen natürlich zusammen. " +
+            "Namen, Zahlen, Termine, Bedingungen, Entscheidungen, Fragen und Handlungsaufforderungen müssen vollständig erhalten bleiben. Gib ausschließlich den fertigen Text aus."
+    ),
+    SIMPLE(
+        "Prüfe zuerst den vollständigen Sinn des Textes. Formuliere danach in sehr klarer, natürlicher Alltagssprache. " +
+            "Nutze kurze vollständige Sätze, bekannte Wörter und eine eindeutige Reihenfolge. Löse komplizierte Satzkonstruktionen auf und erkläre schwierige Formulierungen einfacher. " +
+            "Lass keine wichtige Information weg und erfinde nichts. Der Text soll leicht verständlich sein, aber nicht kindlich wirken. Gib ausschließlich den fertigen Text aus."
+    ),
+    DIRECT(
+        "Prüfe zuerst Sinn, Grammatik und Satzbau. Formuliere danach wesentlich direkter und klarer. " +
+            "Beginne mit dem eigentlichen Anliegen, entferne Umwege, Ausreden, Wiederholungen und unnötige Einleitungen. " +
+            "Bleibe respektvoll und eindeutig. Fakten, Bedingungen, Grenzen und gewünschte Handlungen müssen vollständig erhalten bleiben. Gib ausschließlich den fertigen Text aus."
+    ),
+    PROMPT(
+        "Der Eingabetext ist ein Rohentwurf für einen KI Prompt. Lies ihn vollständig und ermittle intern Ziel, Kontext, gewünschtes Ergebnis, wichtige Einschränkungen und gewünschtes Ausgabeformat. " +
+            "Formuliere daraus einen direkt nutzbaren, klar gegliederten Arbeitsauftrag. Löse Widersprüche auf, wenn die beabsichtigte Richtung eindeutig ist, und entferne unnötige Wiederholungen. " +
+            "Erfinde niemals Fakten, Namen, Daten oder Anforderungen. Wenn eine entscheidende Information fehlt und nicht sicher ableitbar ist, formuliere eine klare Platzhalterstelle oder eine Anweisung an die ausführende KI, diese Information zu klären. " +
+            "Gib ausschließlich den verbesserten Prompt aus."
+    ),
 }
 
 class AiException(message: String) : Exception(message)
