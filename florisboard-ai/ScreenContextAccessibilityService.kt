@@ -18,7 +18,13 @@ class ScreenContextAccessibilityService : AccessibilityService() {
 
         fun readVisibleText(): ScreenContextSnapshot? {
             val service = instanceRef?.get() ?: return null
-            val root = service.rootInActiveWindow ?: return null
+            val root = service.windows
+                .asSequence()
+                .filter { it.isActive || it.isFocused }
+                .mapNotNull { it.root }
+                .firstOrNull { it.packageName?.toString() != service.packageName }
+                ?: service.rootInActiveWindow
+                ?: return null
             return try {
                 val lines = LinkedHashSet<String>()
                 collectVisibleText(root, lines)
