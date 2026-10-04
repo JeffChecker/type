@@ -104,6 +104,66 @@ class AiAssistant(private val context: Context) {
         }
     }
 
+    fun suggestReplyFromScreen(
+        sensitiveField: Boolean,
+        incognito: Boolean,
+        rawEditor: Boolean,
+    ) {
+        if (sensitiveField || rawEditor) {
+            toast("Bildschirmkontext ist in diesem Eingabefeld deaktiviert")
+            return
+        }
+        if (incognito) {
+            toast("Bildschirmkontext ist im Inkognito Modus deaktiviert")
+            return
+        }
+        if (!AiBackend.hasApiKey(appContext)) {
+            toast(AiBackend.credentialHint(appContext))
+            openSettings()
+            return
+        }
+        if (!ScreenContextConsent.hasConsent(appContext) || !ScreenContextAccessibilityService.isConnected()) {
+            ScreenContextDisclosureActivity.open(appContext)
+            return
+        }
+
+        val snapshot = ScreenContextAccessibilityService.readVisibleText()
+        if (snapshot == null || snapshot.text.isBlank()) {
+            toast("Auf dem sichtbaren Bildschirm wurde kein nutzbarer Text gefunden")
+            return
+        }
+
+        val target = selectedOrBestTarget(editorInstance.activeContent)
+        val draft = target?.text.orEmpty()
+        toast("KI versteht den sichtbaren Gesprächskontext …")
+
+        scope.launch {
+            try {
+                val result = AiBackend.replyFromScreenContext(
+                    context = appContext,
+                    screenText = snapshot.text,
+                    draft = draft,
+                )
+                if (result.isBlank()) return@launch
+
+                if (target != null && target.text.isNotBlank()) {
+                    applyIfStillCurrent(target, result)
+                } else {
+                    withContext(Dispatchers.Main) {
+                        suppressUntil = SystemClock.elapsedRealtime() + 1_500L
+                        if (!editorInstance.commitText(result)) {
+                            toast("Antwort konnte in diesem Textfeld nicht eingesetzt werden")
+                        }
+                    }
+                }
+            } catch (e: AiException) {
+                toast(e.message ?: "KI Fehler")
+            } catch (_: Throwable) {
+                toast("KI Verbindung fehlgeschlagen")
+            }
+        }
+    }
+
     private data class Target(val start: Int, val end: Int, val text: String)
 
     private fun selectedOrBestTarget(content: EditorContent): Target? {
@@ -293,14 +353,12 @@ class AiAssistant(private val context: Context) {
 
 enum class AiStyle(val instruction: String) {
     CORRECT(
-        "Prüfe den gesamten Text als zusammenhängende Aussage und nicht Wort für Wort. " +
-            "Ermittle intern zuerst, was die Person tatsächlich sagen will, an wen sich der Text richtet und welche Informationen zusammengehören. " +
-            "Prüfe danach jeden vollständigen Satz im Zusammenhang mit den Sätzen davor und danach auf Sinn, Logik, Grammatik, Wortwahl, Satzbau, Bezüge, Zeitform und Zeichensetzung. " +
-            "Wenn ein Satz zwar einzelne richtige Wörter enthält, aber unnatürlich, missverständlich oder durch Diktat verdreht ist, formuliere den ganzen Satz neu. " +
-            "Korrigiere offensichtliche Spracherkennungsfehler anhand des Zusammenhangs. " +
-            "Erhalte alle sicher erkennbaren Fakten, Namen, Zahlen, Termine, Forderungen, Fragen, Anreden und die beabsichtigte Wirkung. " +
-            "Erfinde keine Informationen und ändere keine Aussage nur, um den Text schöner wirken zu lassen. " +
-            "Das Ergebnis soll sich lesen, als hätte ein aufmerksamer Mensch den Text selbst sauber formuliert. Gib ausschließlich den fertigen Text aus."
+        "Verstehe zuerst die vollständige beabsichtigte Aussage. Prüfe danach Satz für Satz und anschließend den Text noch einmal als Ganzes. " +
+            "Achte besonders auf widersprüchliche Bezüge, falsche Pronomen, fehlende Satzteile, verdrehte Wortreihenfolge, unpassende Zeitformen, Diktatfehler und Sätze, die grammatisch möglich, aber inhaltlich unnatürlich sind. " +
+            "Repariere nicht nur einzelne Wörter. Teile, verbinde, verschiebe oder schreibe ganze Sätze neu, wenn ein Mensch das so natürlicher formulieren würde. " +
+            "Erhalte sicher erkennbare Fakten, Namen, Zahlen, Termine, Fragen, Forderungen, Anreden, Unsicherheiten und die beabsichtigte Wirkung. " +
+            "Erfinde nichts und mache aus einer vorsichtigen Aussage keine sichere Behauptung. " +
+            "Die fertige Fassung muss inhaltlich schlüssig, sprachlich sauber und unmittelbar versendbar sein. Gib ausschließlich den fertigen Text aus."
     ),
     FRIENDLY(
         "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach denselben Inhalt freundlich, warm und respektvoll. " +
@@ -308,10 +366,10 @@ enum class AiStyle(val instruction: String) {
             "Lass Bitten und Aussagen klar. Bewahre Fakten, Grenzen und gewünschte Handlungen. Gib ausschließlich den fertigen Text aus."
     ),
     PROFESSIONAL(
-        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach professionell, klar, souverän und präzise. " +
-            "Ordne Gedanken in einer nachvollziehbaren Reihenfolge und formuliere auch ganze Sätze neu, wenn sie holprig oder unklar sind. " +
-            "Nutze natürliche berufliche Sprache statt Amtsdeutsch, Werbesprache oder typischer KI Formulierungen. " +
-            "Fakten, Namen, Zahlen, Fristen, Zuständigkeiten und Absichten bleiben unverändert. Gib ausschließlich den fertigen Text aus."
+        "Verstehe zuerst Anlass, Ziel und gewünschte Reaktion. Ordne die Informationen danach so, wie ein erfahrener Mensch im Berufsalltag schreiben würde. " +
+            "Formuliere klar, souverän und präzise. Ganze Sätze dürfen neu aufgebaut werden. " +
+            "Keine unnötigen Nominalketten, kein Amtsdeutsch, keine Werbesprache, keine übertriebene Höflichkeit und keine typischen KI Einleitungen. " +
+            "Fakten, Namen, Zahlen, Fristen, Zuständigkeiten, Bedingungen und Absichten bleiben unverändert. Gib ausschließlich den fertigen Text aus."
     ),
     CASUAL(
         "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach locker, spontan und natürlich wie in einer echten Alltagsnachricht. " +
@@ -319,10 +377,10 @@ enum class AiStyle(val instruction: String) {
             "Inhalt, Persönlichkeit und Absicht bleiben erhalten. Gib ausschließlich den fertigen Text aus."
     ),
     HUMOROUS(
-        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere dann deutlich humorvoller, ohne den eigentlichen Inhalt zu verlieren. " +
-            "Nutze den vorhandenen Kontext für Wortwitz, überraschende Formulierungen, trockene Pointen oder leichte Übertreibung. " +
-            "Der Humor soll zur Situation passen und wie spontan von einem Menschen wirken. Erfinde keine Tatsachen und erkläre keinen Witz. " +
-            "Wichtige Informationen und das Anliegen müssen weiterhin eindeutig verständlich sein. Gib ausschließlich den fertigen Text aus."
+        "Verstehe zuerst genau, worum es geht und was trotz Humor unbedingt erhalten bleiben muss. " +
+            "Formuliere danach wie ein schlagfertiger Mensch: situativer Wortwitz, trockene Pointe, überraschender Vergleich oder eine leichte Übertreibung sind erlaubt, wenn sie wirklich zum Inhalt passen. " +
+            "Setze nicht zwanghaft in jeden Satz einen Witz. Keine Kalauer Schablonen, keine erfundenen Ereignisse und keine Erklärung der Pointe. " +
+            "Das eigentliche Anliegen muss auch nach der humorvollen Umformulierung eindeutig bleiben. Gib ausschließlich den fertigen Text aus."
     ),
     IRONIC(
         "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach trocken, deutlich sarkastisch und erkennbar ironisch. " +
@@ -345,15 +403,16 @@ enum class AiStyle(val instruction: String) {
             "Aussage, Fakten und Persönlichkeit bleiben erhalten. Gib ausschließlich den fertigen Text aus."
     ),
     BUSINESS(
-        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere den Inhalt danach als klare geschäftliche Nachricht. " +
-            "Das eigentliche Anliegen, die gewünschte Handlung, Zuständigkeiten, Termine, Zahlen und offene Punkte sollen schnell erfassbar sein. " +
-            "Ordne den Text sinnvoll und formuliere verbindlich, professionell und menschlich, nicht bürokratisch oder künstlich. " +
-            "Keine Fakten ergänzen oder weglassen. Gib ausschließlich den fertigen Text aus."
+        "Ermittle zuerst Geschäftszweck, gewünschte Handlung, Verantwortlichkeit und zeitliche Abfolge. " +
+            "Stelle das eigentliche Anliegen früh und eindeutig heraus. Ordne Termine, Zahlen, offene Punkte und Bedingungen logisch. " +
+            "Formuliere verbindlich und professionell, aber wie ein echter Geschäftspartner und nicht wie ein Behördenformular oder Textgenerator. " +
+            "Keine Fakten ergänzen, abschwächen oder weglassen. Gib ausschließlich den fertigen Text aus."
     ),
     PERSONAL(
-        "Überarbeite zuerst Sinn, Grammatik und Satzbau vollständig. Formuliere danach persönlich, authentisch und nahbar. " +
-            "Erhalte erkennbare Gefühle, individuelle Wortwahl und die Beziehung zum Empfänger. Glätte den Text nicht so stark, dass er austauschbar klingt. " +
-            "Entferne generische Wohlfühlfloskeln und formuliere lieber konkrete, natürliche Sätze. Erfinde keine persönlichen Details oder Gefühle. Gib ausschließlich den fertigen Text aus."
+        "Verstehe zuerst Beziehung, Stimmung und eigentliche Botschaft. Formuliere dann so, wie dieselbe Person es nach kurzem Nachdenken selbst schreiben könnte. " +
+            "Erhalte Ecken, individuelle Wortwahl und erkennbare Gefühle, aber beseitige holprige oder missverständliche Sätze. " +
+            "Nutze konkrete natürliche Formulierungen statt austauschbarer Sätze wie 'ich wollte mich nur kurz melden' oder anderer Standardfloskeln, sofern sie nicht wirklich zum Inhalt gehören. " +
+            "Erfinde keine Erinnerungen, Gefühle, Nähe oder gemeinsame Erlebnisse. Der Text soll persönlich wirken, weil er zum vorhandenen Inhalt passt. Gib ausschließlich den fertigen Text aus."
     ),
     DU(
         "Prüfe den vollständigen Text auf Sinn und sprachliche Fehler. Ändere die Ansprache anschließend konsequent in eine natürliche Du Form. " +
