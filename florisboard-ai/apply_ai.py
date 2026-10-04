@@ -345,6 +345,12 @@ s = replace_once(
 )
 s = replace_once(
     s,
+    "        <!-- Main App Activity -->\n",
+    "        <activity\n"
+    "            android:name=\"dev.patrickgold.florisboard.ime.ai.AiSettingsActivity\"\n"
+    "            android:label=\"KI Schreibassistent\"\n"
+    "            android:exported=\"false\"\n"
+    "            android:theme=\"@style/FlorisAppTheme\"/>\n"
     "        <activity\n"
     "            android:name=\"dev.patrickgold.florisboard.ime.ai.ScreenContextDisclosureActivity\"\n"
     "            android:label=\"Bildschirmkontext\"\n"
@@ -362,13 +368,7 @@ s = replace_once(
     "                android:resource=\"@xml/screen_context_accessibility\"/>\n"
     "        </service>\n\n"
     "        <!-- Main App Activity -->\n",
-    "        <activity\n"
-    "            android:name=\"dev.patrickgold.florisboard.ime.ai.AiSettingsActivity\"\n"
-    "            android:label=\"KI Schreibassistent\"\n"
-    "            android:exported=\"false\"\n"
-    "            android:theme=\"@style/FlorisAppTheme\"/>\n\n"
-    "        <!-- Main App Activity -->\n",
-    "Manifest AI settings activity",
+    "Manifest AI activities and screen context service",
 )
 write(path, s)
 
