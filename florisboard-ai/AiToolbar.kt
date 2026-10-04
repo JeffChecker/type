@@ -102,6 +102,12 @@ fun AiToolbar() {
         }
 
         AiToolbarButton(
+            text = "Antwort",
+            accent = true,
+            onClick = { trigger(TextKeyData.AI_SCREEN_REPLY) },
+        )
+
+        AiToolbarButton(
             text = "Prompt+",
             onClick = { trigger(TextKeyData.AI_PROMPT) },
         )
