@@ -50,6 +50,9 @@ jobs:
           python3 controller/florisboard-ai/apply_backend.py
           python3 controller/florisboard-ai/apply_translation.py
           python3 controller/florisboard-ai/apply_product_ui.py
+          if [ -f controller/florisboard-ai/apply_screen_context.py ]; then
+            python3 controller/florisboard-ai/apply_screen_context.py
+          fi
 
       - name: Enable locally rebuilt JetPref snapshot
         run: |
