@@ -160,6 +160,11 @@ class AiSettingsActivity : ComponentActivity() {
             Text("KI korrigieren: liest den vollständigen Absatz oder die Markierung, versteht zuerst den Zusammenhang und prüft danach jeden Satz auf Sinn, Logik, Grammatik, Satzbau, Diktatfehler und Zeichensetzung. Unnatürliche Sätze dürfen vollständig neu formuliert werden, ohne Fakten zu verändern.")
             Text("Stil: jeder Stil prüft zuerst Sinn und Sprache. Danach wird der Text passend zu Humorvoll, Persönlich, Geschäftlich, Professionell, Freundlich, Locker, Sarkastisch und den weiteren Stilen natürlich neu formuliert.")
             Text("Prompt+: macht aus einem Rohtext einen klaren KI Arbeitsauftrag, ohne fehlende Fakten zu erfinden.")
+            Text("Antwort vorschlagen: kann nach deiner ausdrücklichen Freigabe den aktuell sichtbaren Text der geöffneten App als Gesprächskontext verwenden. Der Bildschirm wird nicht dauerhaft mitgelesen.")
+            Button(
+                onClick = { ScreenContextDisclosureActivity.open(this@AiSettingsActivity) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Bildschirmkontext einrichten") }
 
             Text("KI Anbieter", style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -30,7 +30,12 @@ ai_dir.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(CTRL / "AiAssistant.kt", ai_dir / "AiAssistant.kt")
 shutil.copyfile(CTRL / "AiSettingsActivity.kt", ai_dir / "AiSettingsActivity.kt")
 shutil.copyfile(CTRL / "AiQuickSetup.kt", ai_dir / "AiQuickSetup.kt")
+shutil.copyfile(CTRL / "ScreenContextAccessibilityService.kt", ai_dir / "ScreenContextAccessibilityService.kt")
+shutil.copyfile(CTRL / "ScreenContextDisclosureActivity.kt", ai_dir / "ScreenContextDisclosureActivity.kt")
 shutil.copyfile(CTRL / "ai_strings.xml", SRC / "res/values/ai_strings.xml")
+xml_dir = SRC / "res/xml"
+xml_dir.mkdir(parents=True, exist_ok=True)
+shutil.copyfile(CTRL / "screen_context_accessibility.xml", xml_dir / "screen_context_accessibility.xml")
 shutil.copyfile(
     CTRL / "QuickActionButton.kt",
     SRC / "kotlin/dev/patrickgold/florisboard/ime/smartbar/quickaction/QuickActionButton.kt",
@@ -62,7 +67,8 @@ s = replace_once(
     "    const val AI_DU =                       -325\n"
     "    const val AI_SIE =                      -326\n"
     "    const val AI_PERSONAL =                 -327\n"
-    "    const val AI_SUGGESTIVE =               -328\n",
+    "    const val AI_SUGGESTIVE =               -328\n"
+    "    const val AI_REPLY =                    -329\n",
     "KeyCode AI constants",
 )
 write(path, s)
@@ -92,7 +98,8 @@ s = replace_once(
     "                AI_SIMPLE,\n"
     "                AI_DIRECT,\n"
     "                AI_PROMPT,\n"
-    "                AI_SETTINGS,\n",
+    "                AI_SETTINGS,\n"
+    "                AI_REPLY,\n",
     "TextKeyData InternalKeys",
 )
 marker = '''        /** Predefined key data for [KeyCode.TOGGLE_AUTOCORRECT] */
@@ -122,6 +129,7 @@ addition = marker + '''
         val AI_DIRECT = TextKeyData(KeyType.FUNCTION, KeyCode.AI_DIRECT, "ai_direct")
         val AI_PROMPT = TextKeyData(KeyType.FUNCTION, KeyCode.AI_PROMPT, "ai_prompt")
         val AI_SETTINGS = TextKeyData(KeyType.FUNCTION, KeyCode.AI_SETTINGS, "ai_settings")
+        val AI_REPLY = TextKeyData(KeyType.FUNCTION, KeyCode.AI_REPLY, "ai_reply")
 '''
 s = replace_once(s, marker, addition, "TextKeyData AI definitions")
 write(path, s)
@@ -144,7 +152,8 @@ s = replace_once(
     "            KeyCode.AI_SIMPLE -> R.string.quick_action__ai_simple\n"
     "            KeyCode.AI_DIRECT -> R.string.quick_action__ai_direct\n"
     "            KeyCode.AI_PROMPT -> R.string.quick_action__ai_prompt\n"
-    "            KeyCode.AI_SETTINGS -> R.string.quick_action__ai_settings\n",
+    "            KeyCode.AI_SETTINGS -> R.string.quick_action__ai_settings\n"
+    "            KeyCode.AI_REPLY -> R.string.quick_action__ai_reply\n",
     "QuickAction display names",
 )
 s = replace_once(
@@ -162,7 +171,8 @@ s = replace_once(
     "            KeyCode.AI_SIMPLE -> R.string.quick_action__ai_simple__tooltip\n"
     "            KeyCode.AI_DIRECT -> R.string.quick_action__ai_direct__tooltip\n"
     "            KeyCode.AI_PROMPT -> R.string.quick_action__ai_prompt__tooltip\n"
-    "            KeyCode.AI_SETTINGS -> R.string.quick_action__ai_settings__tooltip\n",
+    "            KeyCode.AI_SETTINGS -> R.string.quick_action__ai_settings__tooltip\n"
+    "            KeyCode.AI_REPLY -> R.string.quick_action__ai_reply__tooltip\n",
     "QuickAction tooltips",
 )
 write(path, s)
@@ -191,6 +201,7 @@ s = replace_once(
             KeyCode.AI_SIMPLE -> "Einfach"
             KeyCode.AI_DIRECT -> "Direkt"
             KeyCode.AI_PROMPT -> "Prompt+"
+            KeyCode.AI_REPLY -> "Antwort"
             else -> null
 ''',
     "ComputingEvaluator AI labels",
@@ -217,6 +228,7 @@ s = replace_once(
     "                QuickAction.InsertKey(TextKeyData.TOGGLE_AUTOCORRECT),\n",
     "                QuickAction.InsertKey(TextKeyData.TOGGLE_AUTOCORRECT),\n"
     "                QuickAction.InsertKey(TextKeyData.AI_STYLE_MENU),\n"
+    "                QuickAction.InsertKey(TextKeyData.AI_REPLY),\n"
     "                QuickAction.InsertKey(TextKeyData.AI_PROMPT),\n"
     "                QuickAction.InsertKey(TextKeyData.AI_SETTINGS),\n",
     "QuickActionArrangement defaults",
@@ -311,7 +323,12 @@ s = replace_once(
     "            KeyCode.AI_SIMPLE -> runAiStyle(AiStyle.SIMPLE)\n"
     "            KeyCode.AI_DIRECT -> runAiStyle(AiStyle.DIRECT)\n"
     "            KeyCode.AI_PROMPT -> runAiStyle(AiStyle.PROMPT)\n"
-    "            KeyCode.AI_SETTINGS -> aiAssistant.openSettings()\n",
+    "            KeyCode.AI_SETTINGS -> aiAssistant.openSettings()\n"
+    "            KeyCode.AI_REPLY -> aiAssistant.suggestReplyFromScreen(\n"
+    "                sensitiveField = activeState.keyVariation != KeyVariation.NORMAL,\n"
+    "                incognito = activeState.isIncognitoMode,\n"
+    "                rawEditor = editorInstance.activeInfo.isRawInputEditor,\n"
+    "            )\n",
     "KeyboardManager AI key handling",
 )
 write(path, s)
@@ -333,9 +350,25 @@ s = replace_once(
     "            android:name=\"dev.patrickgold.florisboard.ime.ai.AiSettingsActivity\"\n"
     "            android:label=\"KI Schreibassistent\"\n"
     "            android:exported=\"false\"\n"
-    "            android:theme=\"@style/FlorisAppTheme\"/>\n\n"
+    "            android:theme=\"@style/FlorisAppTheme\"/>\n"
+    "        <activity\n"
+    "            android:name=\"dev.patrickgold.florisboard.ime.ai.ScreenContextDisclosureActivity\"\n"
+    "            android:label=\"Bildschirmkontext\"\n"
+    "            android:exported=\"false\"\n"
+    "            android:theme=\"@style/FlorisAppTheme\"/>\n"
+    "        <service\n"
+    "            android:name=\"dev.patrickgold.florisboard.ime.ai.ScreenContextAccessibilityService\"\n"
+    "            android:permission=\"android.permission.BIND_ACCESSIBILITY_SERVICE\"\n"
+    "            android:exported=\"true\">\n"
+    "            <intent-filter>\n"
+    "                <action android:name=\"android.accessibilityservice.AccessibilityService\"/>\n"
+    "            </intent-filter>\n"
+    "            <meta-data\n"
+    "                android:name=\"android.accessibilityservice\"\n"
+    "                android:resource=\"@xml/screen_context_accessibility\"/>\n"
+    "        </service>\n\n"
     "        <!-- Main App Activity -->\n",
-    "Manifest AI settings activity",
+    "Manifest AI activities and screen context service",
 )
 write(path, s)
 

@@ -24,4 +24,7 @@
     <string name="quick_action__ai_prompt__tooltip">Rohtext in einen klaren und wirksamen KI Prompt umwandeln</string>
     <string name="quick_action__ai_settings">KI Einstellungen</string>
     <string name="quick_action__ai_settings__tooltip">KI Einstellungen und API Schlüssel öffnen</string>
+    <string name="quick_action__ai_reply">Antwort vorschlagen</string>
+    <string name="quick_action__ai_reply__tooltip">Sichtbaren Gesprächskontext auf Knopfdruck lesen und eine passende Antwort formulieren</string>
+    <string name="screen_context_service_description">Liest nur nach bewusst ausgelöstem Antwortvorschlag den aktuell sichtbaren zugänglichen Text als KI Kontext.</string>
 </resources>
