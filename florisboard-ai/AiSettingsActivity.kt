@@ -375,11 +375,19 @@ class AiSettingsActivity : ComponentActivity() {
             }, modifier = Modifier.fillMaxWidth()) { Text("Speichern und schließen") }
 
             Spacer(Modifier.height(8.dp))
+            Text("Antwort mit Bildschirmkontext", style = MaterialTheme.typography.titleLarge)
+            Text("Mit der Taste „Antwort“ kann die Tastatur auf deinen ausdrücklichen Befehl den aktuell sichtbaren, für Android zugänglichen Text der geöffneten App als Gesprächskontext lesen. Daraus wird zusammen mit deinem Entwurf eine passende Antwort formuliert.")
+            Button(
+                onClick = { ScreenContextDisclosureActivity.open(this@AiSettingsActivity) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Bildschirmkontext einrichten") }
+
+            Spacer(Modifier.height(8.dp))
             Text("Übersetzen", style = MaterialTheme.typography.titleLarge)
             Text("Die Übersetzung kann über den ausgewählten KI Anbieter laufen. Im Inkognito Modus bleibt die Übersetzung lokal, sofern die lokale Übersetzungsfunktion verwendet wird.")
 
             Text("Datenschutz", style = MaterialTheme.typography.titleLarge)
-            Text("Cloud KI wird nur auf Knopfdruck verwendet. Passwortfelder, sensible Eingaben und Inkognito Felder werden nicht an einen Cloud Anbieter gesendet. Bei ChatGPT Login erhält die Tastatur OAuth Tokens statt deines OpenAI API Schlüssels.")
+            Text("Cloud KI wird nur auf Knopfdruck verwendet. Passwortfelder, sensible Eingaben und Inkognito Felder werden nicht an einen Cloud Anbieter gesendet. Bildschirmkontext wird nur nach Tippen auf „Antwort“ gelesen und an den ausgewählten KI Anbieter gesendet. Es wird kein Bildschirmverlauf gespeichert. Bei ChatGPT Login erhält die Tastatur OAuth Tokens statt deines OpenAI API Schlüssels.")
         }
     }
 }

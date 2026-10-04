@@ -1,17 +1,28 @@
-name: KI Tastatur Beta v6
+name: KI Tastatur Beta v7
 
 permissions:
   contents: write
 
 on:
+  push:
+    branches:
+      - main
+      - beta-v7-screen-context
+    paths:
+      - 'florisboard-de/**'
+      - 'florisboard-ai/**'
+      - 'assets/**'
+      - 'README.md'
+      - 'KI-Tastatur-RELEASE.md'
+      - '.github/workflows/ki-tastatur-beta-v7.yml'
   workflow_dispatch:
 
 concurrency:
-  group: ki-tastatur-beta-v6-${{ github.ref }}
+  group: ki-tastatur-beta-v7-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-beta-v6:
+  build-beta-v7:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout controller repository
@@ -40,19 +51,22 @@ jobs:
       - name: Apply KI Tastatur branding
         run: python3 controller/florisboard-ai/apply_branding.py
 
-      - name: Add manual AI correction, style menu and Prompt+
+      - name: Add AI correction, styles and Prompt+
         run: python3 controller/florisboard-ai/apply_ai.py
 
       - name: Add AI providers and ChatGPT login
         run: python3 controller/florisboard-ai/apply_backend.py
 
-      - name: Add local translation
+      - name: Add translation
         run: python3 controller/florisboard-ai/apply_translation.py
 
       - name: Apply dedicated KI Tastatur product UI
         run: python3 controller/florisboard-ai/apply_product_ui.py
 
-      - name: Set Beta v6 version and sign release build
+      - name: Add screen context reply feature
+        run: python3 controller/florisboard-ai/apply_screen_context.py
+
+      - name: Set Beta v7 version and sign release build
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -66,11 +80,11 @@ jobs:
           code_marker = '        versionCode = projectVersionCode.toInt()\n'
           if code_marker not in s:
               raise SystemExit('versionCode marker not found')
-          s = s.replace(code_marker, '        versionCode = 122\n', 1)
+          s = s.replace(code_marker, '        versionCode = 123\n', 1)
           version_marker = '        versionName = projectVersionName.substringBefore("-")\n'
           if version_marker not in s:
               raise SystemExit('versionName marker not found')
-          s = s.replace(version_marker, '        versionName = "1.0.0-beta6"\n', 1)
+          s = s.replace(version_marker, '        versionName = "1.0.0-beta7"\n', 1)
           p.write_text(s, encoding='utf-8')
           PY
 
@@ -97,7 +111,7 @@ jobs:
             :datastore-ui:publishToMavenLocal \
             :material-ui:publishToMavenLocal
 
-      - name: Build KI Tastatur Beta v6 APK
+      - name: Build KI Tastatur Beta v7 APK
         working-directory: florisboard
         run: ./gradlew clean assembleRelease
 
@@ -106,25 +120,25 @@ jobs:
           APK='florisboard/app/build/outputs/apk/release/app-release.apk'
           test -f "$APK"
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump badging "$APK" | head -20
-          cp "$APK" KI-Tastatur-Beta-v6.apk
-          sha256sum KI-Tastatur-Beta-v6.apk
+          cp "$APK" KI-Tastatur-Beta-v7.apk
+          sha256sum KI-Tastatur-Beta-v7.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KI-Tastatur-Beta-v6
-          path: KI-Tastatur-Beta-v6.apk
+          name: KI-Tastatur-Beta-v7
+          path: KI-Tastatur-Beta-v7.apk
 
-      - name: Publish Beta v6 release
+      - name: Publish Beta v7 release
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="ki-tastatur-beta-v6"
+          TAG="ki-tastatur-beta-v7"
           NOTES_FILE="controller/KI-Tastatur-RELEASE.md"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "KI Tastatur Beta v6" --notes-file "$NOTES_FILE" --prerelease
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "KI Tastatur Beta v7" --notes-file "$NOTES_FILE" --prerelease
           else
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "KI Tastatur Beta v6" --notes-file "$NOTES_FILE" --prerelease
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "KI Tastatur Beta v7" --notes-file "$NOTES_FILE" --prerelease
           fi
-          gh release upload "$TAG" KI-Tastatur-Beta-v6.apk --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$TAG" KI-Tastatur-Beta-v7.apk --repo "$GITHUB_REPOSITORY" --clobber

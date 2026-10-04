@@ -1,51 +1,53 @@
-# KI Tastatur Beta v6
+# KI Tastatur Beta v7
 
-**Texte werden jetzt zuerst verstanden und danach neu formuliert.**
+**Antworten mit sichtbarem Gesprächskontext.**
 
-Beta v6 überarbeitet die eigentliche Schreiblogik. Korrigieren und alle Stilarten prüfen nicht mehr nur einzelne Wörter. Der vollständige Absatz oder markierte Text wird zuerst als zusammenhängende Aussage verstanden.
+Beta v7 baut auf ChatGPT Login und der semantischen Textprüfung aus Beta v6 auf und ergänzt die neue Funktion **Antwort**.
 
-## Neu: deutlich stärkere Korrektur
+## Neu: Antwort aus dem sichtbaren Kontext
 
-**KI korrigieren** prüft Sinn, Logik, Grammatik, Satzbau, Wortbezüge, Zeitform, Zeichensetzung und typische Diktatfehler im Zusammenhang.
+Nach Tippen auf **Antwort** liest KI Tastatur den aktuell sichtbaren, für Android zugänglichen Text der geöffneten App. Daraus wird der Gesprächszusammenhang erkannt und eine passende Antwort formuliert.
 
-Ein grammatisch falscher oder unnatürlicher Satz darf vollständig neu aufgebaut werden. Dabei sollen Fakten, Namen, Zahlen, Termine, Fragen, Forderungen und die erkennbare Absicht erhalten bleiben.
+Wenn bereits ein eigener Entwurf im Eingabefeld steht, wird er als gewünschte Richtung berücksichtigt und sinnvoll verbessert. Ist das Feld leer, wird eine neue Antwort eingefügt.
 
-Bewusst gesetzte Endzeichen wie `!`, `?`, `?!` und `…` bleiben erhalten. Ein normaler fehlender Punkt darf jetzt sinnvoll ergänzt werden.
+Bildschirmtext wird ausdrücklich nur als Kontext behandelt, nicht als Anweisung an die KI. Fremde Prompts oder Webseitenanweisungen sollen dadurch die Antwortlogik nicht übernehmen.
 
-## Neu: alle Stil Prompts überarbeitet
+## Datenschutz und Einwilligung
 
-Freundlich, Professionell, Geschäftlich, Stilvoll, Locker, Humorvoll, Sarkastisch, Flirtend, Verführerisch, Persönlich, Direkt, Kurz, Einfache Sprache, Du Form und Sie Form führen zuerst eine Sinnprüfung durch.
+Die Funktion liest nicht dauerhaft mit und speichert keinen Bildschirmverlauf. Der Zugriff erfolgt nur nach Tippen auf **Antwort**.
 
-Danach wird der gewünschte Stil umgesetzt. Humor entsteht aus dem vorhandenen Zusammenhang. Persönliche Texte sollen individuell und nahbar wirken. Professionelle Texte bleiben klar und natürlich. Unnötige KI Floskeln und künstliche Formulierungen werden ausdrücklich vermieden.
+Passwortfelder und editierbare Fremdfelder werden ausgelassen. Inkognito und sensible Eingabefelder bleiben für Cloud KI gesperrt.
 
-## Neu: Mit ChatGPT anmelden
+Vor der ersten Nutzung erscheint eine eigene Offenlegung. Erst nach ausdrücklicher Zustimmung kann der erforderliche Android Dienst aktiviert werden. Der gelesene Text wird für die Antwort an den in KI Tastatur ausgewählten KI Anbieter gesendet.
 
-OpenAI kann in Beta v6 über den offiziellen **Sign in with ChatGPT** Ablauf verbunden werden.
+## Noch stärkere Satzprüfung
 
-Berechtigte Nutzer können nach eigener Zustimmung ihre freigegebene ChatGPT Plan Nutzung für OpenAI Anfragen der Tastatur verwenden. Dafür muss kein OpenAI API Schlüssel in der App eingetragen werden.
+Die allgemeine Korrektur arbeitet nun in drei Schritten: Bedeutung und Absicht erfassen, jeden Satz im Zusammenhang prüfen und die fertige Fassung noch einmal als Ganzes auf Sinn und Natürlichkeit kontrollieren.
 
-Die bisherige OpenAI API Schlüssel Nutzung bleibt als Alternative erhalten. In den Einstellungen kann jederzeit zwischen ChatGPT Plan und API Schlüssel gewechselt werden.
+Sätze dürfen vollständig neu gebaut, geteilt, zusammengeführt oder umgestellt werden, wenn das Ergebnis dadurch menschlicher und verständlicher wird.
 
-Der Login verwendet den Systembrowser, PKCE, State und Nonce Prüfung, ID Token Prüfung und rotierende OAuth Tokens. Die Inferenz läuft über die öffentliche OpenAI Responses API mit `store: false` und `stream: true`.
+Die Prompts für Korrigieren, Humorvoll, Persönlich, Professionell und Geschäftlich wurden zusätzlich verschärft.
 
-## Weitere Anbieter
+## Login
 
-Google Gemini, Anthropic Claude und Groq bleiben verfügbar. Sie verwenden weiterhin ihre offiziellen Entwickler Zugänge. Die Tastatur automatisiert keine Chat Webseiten und versucht nicht, normale Abonnements über undokumentierte Schnittstellen zu verwenden.
+Der offizielle **Mit ChatGPT anmelden** Ablauf bleibt erhalten. OpenAI kann weiterhin über ChatGPT Login oder alternativ mit einem eigenen API Schlüssel verwendet werden.
 
-## Datenschutz
+Gemini, Claude und Groq bleiben über ihre offiziellen Entwickler Zugänge verfügbar.
 
-Cloud Funktionen laufen nur auf Knopfdruck. Passwortfelder, sensible Eingaben und Inkognito Felder werden nicht an Cloud KI Anbieter gesendet.
+## Einschränkung
+
+Es wird zugänglicher Bildschirmtext verwendet. Text, der nur in Bildern, Videos oder speziell geschützten Oberflächen dargestellt wird, kann nicht zuverlässig gelesen werden.
 
 ## Installation
 
-1. **KI-Tastatur-Beta-v6.apk** herunterladen.
+1. **KI-Tastatur-Beta-v7.apk** herunterladen.
 2. APK installieren.
 3. KI Tastatur in Android aktivieren.
 4. Als Eingabemethode auswählen.
-5. KI Einstellungen öffnen.
-6. OpenAI direkt mit ChatGPT verbinden oder einen API Anbieter konfigurieren.
-7. `auto` für die Modellwahl verwenden oder ein verfügbares Modell auswählen.
-8. Verbindung testen.
+5. KI Anbieter einrichten oder mit ChatGPT anmelden.
+6. In den KI Einstellungen **Bildschirmkontext einrichten** öffnen.
+7. Der Offenlegung zustimmen und den Dienst **KI Tastatur Bildschirmkontext** in den Android Bedienungshilfen aktivieren.
+8. In einem Chat auf **Antwort** tippen.
 
 ## Open Source Grundlage
 

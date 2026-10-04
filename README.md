@@ -6,14 +6,14 @@
 <p align="center"><strong>Schreiben. Verstehen. Verbessern. Direkt auf der Tastatur.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v6"><strong>Beta v6 herunterladen</strong></a>
+  <a href="https://github.com/JeffChecker/type/releases/tag/ki-tastatur-beta-v7"><strong>Beta v7 herunterladen</strong></a>
 </p>
 
 ## Texte verstehen statt Wörter austauschen
 
 KI Tastatur verbindet FlorisBoard mit einer KI Schreibassistenz. Du schreibst wie gewohnt und entscheidest selbst, wann die KI helfen soll.
 
-Beta v6 prüft einen markierten Text oder den aktuellen Absatz als zusammenhängende Aussage. Die KI liest zuerst den vollständigen Text, ermittelt Sinn, Empfänger, Ton und gewünschte Handlung und prüft danach die einzelnen Sätze im Zusammenhang. Holprige, verdrehte oder durch Diktat falsch erkannte Sätze dürfen vollständig neu formuliert werden. Fakten, Namen, Zahlen, Termine, Fragen und Forderungen sollen dabei erhalten bleiben.
+Beta v7 prüft einen markierten Text oder den aktuellen Absatz als zusammenhängende Aussage. Die KI liest zuerst den vollständigen Text, ermittelt Sinn, Empfänger, Ton und gewünschte Handlung und prüft danach die einzelnen Sätze im Zusammenhang. Holprige, verdrehte oder durch Diktat falsch erkannte Sätze dürfen vollständig neu formuliert werden. Fakten, Namen, Zahlen, Termine, Fragen und Forderungen sollen dabei erhalten bleiben.
 
 Die Korrektur startet ausschließlich auf Knopfdruck. Bewusst gesetzte Satzenden wie `!`, `?`, `?!` oder `…` bleiben erhalten. Ein fehlender normaler Punkt darf ergänzt werden, wenn der Satz dadurch grammatisch vollständig wird.
 
@@ -29,9 +29,15 @@ Jeder Stil beginnt mit derselben Sinnprüfung. Erst danach wird der gewünschte 
 
 **Prompt+** liest einen Rohentwurf vollständig, erkennt Ziel, Kontext, Anforderungen und gewünschtes Ergebnis und macht daraus einen direkt nutzbaren KI Prompt. Fehlende Tatsachen werden nicht erfunden.
 
+## Antwort mit sichtbarem Kontext
+
+Mit **Antwort** kann KI Tastatur den aktuell sichtbaren, von Android bereitgestellten Text der geöffneten App als Gesprächskontext verwenden. Die Funktion läuft nur nach einem bewussten Tippen auf die Taste. Es wird kein Verlauf aufgezeichnet. Vor der Aktivierung wird erklärt, welche Daten verwendet werden und wofür.
+
+Wenn bereits ein Entwurf im Eingabefeld steht, wird er zusammen mit dem sichtbaren Kontext berücksichtigt. Text in Bildern, Videos oder speziell geschützten Oberflächen kann nicht zuverlässig erfasst werden.
+
 ## OpenAI direkt mit ChatGPT verbinden
 
-Beta v6 unterstützt den offiziellen OpenAI Ablauf **Sign in with ChatGPT** für Open Source Anwendungen.
+Beta v7 unterstützt den offiziellen OpenAI Ablauf **Sign in with ChatGPT** für Open Source Anwendungen.
 
 Damit kann ein berechtigter ChatGPT Nutzer sein ChatGPT Konto direkt mit der Tastatur verbinden. Die Tastatur erhält nach Zustimmung OAuth Zugangsdaten. Ein OpenAI API Schlüssel muss für diese Zugangsart nicht in der App eingetragen werden.
 
@@ -65,11 +71,13 @@ Die vorhandene lokale Übersetzung bleibt für den dafür vorgesehenen lokalen M
 
 Cloud KI wird nur ausgelöst, wenn du selbst eine KI Funktion betätigst. Passwortfelder, als sensibel erkannte Eingabefelder, Rohfelder und Inkognito Eingaben werden nicht an einen Cloud Anbieter gesendet.
 
+Für **Antwort** wird nur nach dem Tippen auf die Funktion sichtbarer Text gelesen und an den ausgewählten KI Anbieter gesendet. Es wird kein Bildschirmverlauf gespeichert.
+
 Bei OpenAI Login werden keine Zugangsdaten für chatgpt.com abgefragt oder ausgelesen. Die Anmeldung erfolgt über den offiziellen OpenAI OAuth Ablauf. API Schlüssel und OAuth Tokens werden nicht im öffentlichen Quellcode hinterlegt.
 
 ## Installation
 
-1. **KI-Tastatur-Beta-v6.apk** aus den GitHub Releases herunterladen.
+1. **KI-Tastatur-Beta-v7.apk** aus den GitHub Releases herunterladen.
 2. APK installieren.
 3. KI Tastatur in den Android Einstellungen aktivieren.
 4. Als Eingabemethode auswählen.
@@ -77,8 +85,9 @@ Bei OpenAI Login werden keine Zugangsdaten für chatgpt.com abgefragt oder ausge
 6. OpenAI wählen und **Mit ChatGPT anmelden** verwenden oder einen API Schlüssel hinterlegen. Für Gemini, Claude oder Groq den jeweiligen API Zugang eintragen.
 7. Modell auf `auto` lassen oder die verfügbaren Modelle laden und eines auswählen.
 8. Verbindung testen.
+9. Für **Antwort** einmalig den Bildschirmkontext einrichten.
 
-Beta v6 ist eine Testversion. Der neue ChatGPT Login ist ein aktuell von OpenAI als Preview dokumentierter Open Source Ablauf und kann sich deshalb noch ändern.
+Beta v7 ist eine Testversion. Der neue ChatGPT Login ist ein aktuell von OpenAI als Preview dokumentierter Open Source Ablauf und kann sich deshalb noch ändern.
 
 ## Technische Basis
 
