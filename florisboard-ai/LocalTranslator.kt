@@ -49,6 +49,20 @@ class LocalTranslator(private val context: Context) {
             return
         }
 
+        val screenSnapshot =
+            if (!incognito && ScreenContextConsent.hasConsent(appContext) &&
+                ScreenContextAccessibilityService.isConnected()
+            ) {
+                ScreenContextAccessibilityService.readVisibleText()
+            } else {
+                null
+            }
+
+        if (screenSnapshot != null && screenSnapshot.text.isNotBlank() && AiBackend.hasApiKey(appContext)) {
+            translateToConversationLanguage(target, screenSnapshot.text)
+            return
+        }
+
         val setting = TranslationBackend.targetSetting(appContext)
         val targetCode = if (setting == TranslationBackend.TARGET_ACTIVE_KEYBOARD) {
             TranslationBackend.normalizeKeyboardLanguageTag(targetLocale.languageTag())
@@ -93,6 +107,30 @@ class LocalTranslator(private val context: Context) {
                 translateCloud(target, targetCode, targetName, cloudKey, allowLocalFallback = true)
             }
             else -> translateLocal(target, targetCode, targetName)
+        }
+    }
+
+    private fun translateToConversationLanguage(target: Target, screenText: String) {
+        val providerName = AiBackend.providerDisplayName(appContext)
+        toast("Erkenne Gesprächssprache und übersetze mit $providerName KI …")
+        scope.launch {
+            try {
+                val translated = AiBackend.translateToConversationLanguage(
+                    context = appContext,
+                    text = target.text,
+                    screenText = screenText,
+                )
+                if (translated.isBlank()) throw AiException("Die KI hat keine Übersetzung zurückgegeben")
+                withContext(Dispatchers.Main) {
+                    applyIfStillCurrent(
+                        target,
+                        translated,
+                        "In die erkannte Gesprächssprache übersetzt",
+                    )
+                }
+            } catch (e: Throwable) {
+                toast(e.message ?: "Automatische Bildschirm Übersetzung fehlgeschlagen")
+            }
         }
     }
 
