@@ -49,6 +49,29 @@ class LocalTranslator(private val context: Context) {
             return
         }
 
+        val screenContextReady =
+            !incognito &&
+                ScreenContextConsent.hasConsent(appContext) &&
+                ScreenContextAccessibilityService.isConnected() &&
+                AiBackend.hasApiKey(appContext)
+
+        if (screenContextReady && !ScreenTranslationConsent.allowed(appContext)) {
+            ScreenTranslationDisclosureActivity.open(appContext)
+            return
+        }
+
+        val screenSnapshot =
+            if (screenContextReady && ScreenTranslationConsent.allowed(appContext)) {
+                ScreenContextAccessibilityService.readVisibleText()
+            } else {
+                null
+            }
+
+        if (screenSnapshot != null && screenSnapshot.text.isNotBlank()) {
+            translateToConversationLanguage(target, screenSnapshot.text)
+            return
+        }
+
         val setting = TranslationBackend.targetSetting(appContext)
         val targetCode = if (setting == TranslationBackend.TARGET_ACTIVE_KEYBOARD) {
             TranslationBackend.normalizeKeyboardLanguageTag(targetLocale.languageTag())
@@ -93,6 +116,30 @@ class LocalTranslator(private val context: Context) {
                 translateCloud(target, targetCode, targetName, cloudKey, allowLocalFallback = true)
             }
             else -> translateLocal(target, targetCode, targetName)
+        }
+    }
+
+    private fun translateToConversationLanguage(target: Target, screenText: String) {
+        val providerName = AiBackend.providerDisplayName(appContext)
+        toast("Erkenne Gesprächssprache und übersetze mit $providerName KI …")
+        scope.launch {
+            try {
+                val translated = AiBackend.translateToConversationLanguage(
+                    context = appContext,
+                    text = target.text,
+                    screenText = screenText,
+                )
+                if (translated.isBlank()) throw AiException("Die KI hat keine Übersetzung zurückgegeben")
+                withContext(Dispatchers.Main) {
+                    applyIfStillCurrent(
+                        target,
+                        translated,
+                        "In die erkannte Gesprächssprache übersetzt",
+                    )
+                }
+            } catch (e: Throwable) {
+                toast(e.message ?: "Automatische Bildschirm Übersetzung fehlgeschlagen")
+            }
         }
     }
 
