@@ -49,16 +49,25 @@ class LocalTranslator(private val context: Context) {
             return
         }
 
+        val screenContextReady =
+            !incognito &&
+                ScreenContextConsent.hasConsent(appContext) &&
+                ScreenContextAccessibilityService.isConnected() &&
+                AiBackend.hasApiKey(appContext)
+
+        if (screenContextReady && !ScreenTranslationConsent.allowed(appContext)) {
+            ScreenTranslationDisclosureActivity.open(appContext)
+            return
+        }
+
         val screenSnapshot =
-            if (!incognito && ScreenContextConsent.hasConsent(appContext) &&
-                ScreenContextAccessibilityService.isConnected()
-            ) {
+            if (screenContextReady && ScreenTranslationConsent.allowed(appContext)) {
                 ScreenContextAccessibilityService.readVisibleText()
             } else {
                 null
             }
 
-        if (screenSnapshot != null && screenSnapshot.text.isNotBlank() && AiBackend.hasApiKey(appContext)) {
+        if (screenSnapshot != null && screenSnapshot.text.isNotBlank()) {
             translateToConversationLanguage(target, screenSnapshot.text)
             return
         }
