@@ -20,6 +20,7 @@ def patch(path: Path, old: str, new: str, label: str):
 ai_dir = SRC / "kotlin/dev/patrickgold/florisboard/ime/ai"
 ai_dir.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(CTRL / "ScreenContextAccess.kt", ai_dir / "ScreenContextAccess.kt")
+shutil.copyfile(CTRL / "ScreenTranslationDisclosure.kt", ai_dir / "ScreenTranslationDisclosure.kt")
 
 xml_dir = SRC / "res/xml"
 xml_dir.mkdir(parents=True, exist_ok=True)
@@ -128,6 +129,12 @@ patch(
     '''        <activity
             android:name="dev.patrickgold.florisboard.ime.ai.ScreenContextDisclosureActivity"
             android:label="Bildschirmkontext"
+            android:exported="false"
+            android:theme="@style/FlorisAppTheme"/>
+
+        <activity
+            android:name="dev.patrickgold.florisboard.ime.ai.ScreenTranslationDisclosureActivity"
+            android:label="Automatische Gesprächsübersetzung"
             android:exported="false"
             android:theme="@style/FlorisAppTheme"/>
 
